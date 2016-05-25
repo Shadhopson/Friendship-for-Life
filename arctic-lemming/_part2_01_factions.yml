@@ -1,0 +1,75 @@
+
+faction:
+    x: 75
+    y: 75
+    width: 100
+    height: 100
+
+human:
+  extends: faction
+  file: backup.svg
+drone:
+  extends: faction
+  file: auto-repair.svg
+
+Child:
+    extends: faction
+    file: ages.svg
+
+name:
+    extends: title
+    font: 'Serif Bold 50'
+
+skill_description:
+    x: 145
+    y: 350
+
+skill_boost:
+    extends: skill_description
+    y: += 50
+    x: += 150
+skill_2:
+    extends: skill_boost
+    y: += 50
+skill_3:
+    extends: skill_2
+    y: += 50
+skill_4:
+    extends: skill_3
+    y: +=50
+need_description:
+    extends: skill_description
+    y: += 250
+
+needs_fulfilled:
+    extends: skill_boost
+    y: += 250
+
+needs_fulfilled_2:
+    extends: needs_fulfilled
+    y: += 50
+
+needs_fulfilled_3:
+    extends: needs_fulfilled_2
+    y: += 50
+
+needs_fulfilled_4:
+    extends: needs_fulfilled_3
+    y: += 50
+
+pay_label:
+    extends: needs_fulfilled_3
+    y: += 100
+    x: -= 150
+pay:
+    extends: pay_label
+    x: += 100
+    width: 500
+    ellipsize: false
+
+finances:
+    extends: pay
+    x: += 150
+type:
+    x: 95
+    y: 95

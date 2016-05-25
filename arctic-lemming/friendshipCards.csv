@@ -1,0 +1,11 @@
+Type,Name,Skill Boost,Need Fulfilled 1,Need Fulfilled 2,Cost
+Child,Laurence,Analytical +1,Exercise +1,,$ -1
+Child,June,Confidence +1,Help the World +1,,$ -1
+Child,Kim,Empathy +1,Mental Exercise +1,Exercise + 2,$ -1
+Child,Tom,Empathy +1,Relax -1,Spiritual +2,$ -1
+Child,Siegfried,Empathy +1,Exercise +1,Social +2,$ -1
+Child,Jen,Physical +1,Help the World +1,Relax +1,$ -1
+Child,Carry,Creative +1,Mental Exercise +1,Exercise + 1,$ -1
+Child,Matthias,Empathy -1,Help the World -1,,$ -1
+Child,Laura,Empathy +1,,,$ -1
+Child,Bin,Physical +1,Spiritual +1,,$ -1

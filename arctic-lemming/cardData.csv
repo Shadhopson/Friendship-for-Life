@@ -1,0 +1,5 @@
+name,faction,power
+Ninja,human,Use the power of another player
+Pirate,human,Steal 1 card from another player
+Zombie,drone,Take a card from the discard pile
+Robot,drone,Draw two cards

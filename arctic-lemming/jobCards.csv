@@ -1,0 +1,10 @@
+Type,Position,Skills Needed 1,Skills Needed 2,Skills Needed 3,Pay,Benefit 1,Benefit 2,Benefit 3
+Job,Nurse,Empathy: 4,Analytical: 3,,$3,Help the World +2,Mental Exercise +1,
+Job,Fire Fighter,Physical: 4,Confidence: 2,,$2,Help the World +1,Exercise + 1,
+Job,Wait Staff,Physical: 2,Confidence: 2,,$2,Social +1,,
+Job,Programmer,Analytical: 4,Creative: 2,,$4,Mental Exercise +1,Exercise -2,
+Job,Doctor,Analytical: 4,Empathy: 3,Confidence: 2,$5,Mental Exercise +1,Help the World +1,Relax -1
+Job,Artist,Creative: 4,Confidence: 4,,Your pay is the result of a dice roll.,,,
+Job,Professor,Analytical: 4,Empathy: 2,Creative: 1,$4,Help the World +1,Mental Exercise +1,Relax -1
+Job,Teacher,Empathy: 3,Analytical: 2,Creative: 2,$2,Help the World +2,Relax -1,
+Job,Sport Player,Physical: 5,Confidence: 3,,"Roll a die, if you roll a 6 your pay is $8, else its $1",,,
