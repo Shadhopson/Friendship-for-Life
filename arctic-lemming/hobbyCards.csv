@@ -1,13 +1,13 @@
-Type,Hobby,Skill Gained 1,Skill Gained 2,Skill Gained 3,Skill Gained 4,Need Fulfilled 1,Need Fulfilled 2,Need Fulfilled 3,Need Fulfilled 4
-Hobby,Volunteering,Empathy + 2,,,,Help the World +1,Social +1,,
-Hobby,Dating,Confidence +1,,,,Sexuality +2,Social +1,Money: -$2,
-Hobby,Hockey,Physical +1,,,,Exercise +2,Social +1,Money -$1,
-Hobby,Yoga,Physical +1,Empathy +1,,,Relax +2,Exercise +2,Money -$1,
-Hobby,Football,Physical +2,Confidence +2,Analytical -2,Empathy -1,Exercise +2,Social +1,,
-Hobby,Boxing,Physical +2,Confidence +1,Analytical -1,Empathy -1,Exercise +2,,,
-Hobby,Fencing,Physical +1,Confidence +1,Analytical +1,,Exercise +2,Money -$2,,
-Hobby,Bar Hopping,Confidence +1,,,,Social +2,Sexuality +1,Relax +1,Money -$2
-Hobby,Dancing,Physical +1,Confidence +1,,,Exercise +1,Creativity +1,Social +1,Money -$1
-Hobby,Acting,Confidence +2,Creative +1,Empathy -1,,Mental Exercise +1,Creativity +1,,
-Hobby,Board Games,Analytical +1,,,,Social +1,Mental Exercise +1,Relax +1,
-Hobby,Painting,Creative +2,,,,Creativity +2,Mental Exercise +1,Exercise -1,Money -$1
+Hobby,Skill Gained 1,Skill Gained 2,Skill Gained 3,Skill Gained 4,Need Fulfilled 1,Need Fulfilled 2,Need Fulfilled 3,Need Fulfilled 4
+Volunteering,Empathy + 2,,,,Help the World +1,Social +1,,
+Dating,Confidence +1,,,,Sexuality +2,Social +1,Money -$2,
+Hockey,Physical +1,,,,Exercise +2,Social +1,Money -$1,
+Yoga,Physical +1,Empathy +1,,,Relax +2,Exercise +2,Money -$1,
+Football,Physical +2,Confidence +2,Analytical -2,Empathy -1,Exercise +2,Social +1,,
+Boxing,Physical +2,Confidence +1,Analytical -1,Empathy -1,Exercise +2,,,
+Fencing,Physical +1,Confidence +1,Analytical +1,,Exercise +2,Money -$2,,
+Bar Hopping,Confidence +1,,,,Social +2,Sexuality +1,Relax +1,Money -$2
+Dancing,Physical +1,Confidence +1,,,Exercise +1,Creativity +1,Social +1,Money -$1
+Acting,Confidence +2,Creative +1,Empathy -1,,Mental Exercise +1,Creativity +1,,
+Board Games,Analytical +1,,,,Social +1,Mental Exercise +1,Relax +1,
+Painting,Creative +2,,,,Creativity +2,Mental Exercise +1,Exercise -1,Money -$1
