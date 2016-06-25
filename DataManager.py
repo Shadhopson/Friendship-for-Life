@@ -3,23 +3,80 @@ import sqlite3
 import csv
 import json
 
-class CsvDataManager(object):
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
+def get_rows(q):
+  rows = []
+  for row in q:
+    rows.append(row)
+  return rows
+
+def get_row(q):
+  for row in q:
+    return row
+
+class DataManager(object):
+
+  conn = None
   settings = []
-  settingFilePath = 'CsvDataManager.json'
+  settingFilePath = 'DataManager.json'
 
-  #Manages class settings loaded from CsvDataManager.json
+  #connection to DB
+  @staticmethod
+  def connection():
+    if DataManager.conn == None:
+      DataManager.conn = sqlite3.connect( DataManager.setting('dbPath') )
+      DataManager.conn.row_factory = dict_factory 
+    return DataManager.conn
+
+  #get rows from DB
+  @staticmethod
+  def getRows(q,ops=None):
+    if ops != None:
+      return get_rows( DataManager.execute(q,ops) )
+    else:
+      return get_rows( DataManager.execute(q) )
+
+  #get rows from DB
+  @staticmethod
+  def getRow(q,ops=None):
+    if ops != None:
+      return get_row( DataManager.execute(q,ops) )
+    else:
+      return get_row( DataManager.execute(q) )
+
+  #get rows from DB
+  @staticmethod
+  def execute(q,ops=None):
+    conn = DataManager.connection()
+    if ops != None:
+      return conn.cursor().execute(q,ops)
+    else:
+      return conn.cursor().execute(q)
+
+  #close connection to DB
+  @staticmethod
+  def closeConnection():
+    if DataManager.conn:
+      DataManager.conn.commit()
+      DataManager.conn.close()
+
+  #Manages class settings loaded from DataManager.json
   @staticmethod
   def setting(pSettingName):
-    if len(CsvDataManager.settings) == 0:
-      jsonFile = open( CsvDataManager.settingFilePath )
+    if len(DataManager.settings) == 0:
+      jsonFile = open( DataManager.settingFilePath )
       try: 
-        CsvDataManager.settings = json.loads(jsonFile.read())
+        DataManager.settings = json.loads(jsonFile.read())
       except ValueError, e:
         print "INVALID JSON SETTINGS FILE - EXITING"
         exit()
-    if pSettingName in CsvDataManager.settings:
-      return CsvDataManager.settings[pSettingName]
+    if pSettingName in DataManager.settings:
+      return DataManager.settings[pSettingName]
     else:
       return None
 
@@ -27,7 +84,7 @@ class CsvDataManager(object):
   @staticmethod
   def nameToCode(pCode):
     code = pCode.title().replace( " ", "" )
-    aliases = CsvDataManager.setting("codeAliases")
+    aliases = DataManager.setting("codeAliases")
     if code in aliases:
       code = aliases[code]
     return code
@@ -41,7 +98,7 @@ class CsvDataManager(object):
       raise ValueError( errorStr )
     name = parts[0][0]
     name =  name.strip()
-    code = CsvDataManager.nameToCode( name )
+    code = DataManager.nameToCode( name )
     value = parts[0][1].replace(" ", "")
     value = value.replace("$", "")
     return { 'code': code, 'name': name, 'value': value }
@@ -51,7 +108,7 @@ class CsvDataManager(object):
   @staticmethod
   def csvToDb():
 
-    conn = sqlite3.connect( CsvDataManager.setting('dbPath') )
+    conn = GameManager.connection()
 
     c = conn.cursor()
 
@@ -74,6 +131,10 @@ class CsvDataManager(object):
     c.execute( "DELETE FROM PartnerSkillRequirement" )
     c.execute( "DELETE FROM PartnerNeed" )
 
+    c.execute( "DELETE FROM Job" )
+    c.execute( "DELETE FROM JobSkillRequirement" )
+    c.execute( "DELETE FROM JobNeed" )
+
     skillsInDb = []
     needsInDb = []
 
@@ -82,7 +143,7 @@ class CsvDataManager(object):
     nameColumn =  0
     skillColumns = []
     needColumns = []
-    f = open( CsvDataManager.setting('hobbyCardCsvPath') )
+    f = open( DataManager.setting('hobbyCardCsvPath') )
     hobbyFileCSV = csv.reader(f)
     for ri,row in enumerate(hobbyFileCSV):
 
@@ -103,12 +164,12 @@ class CsvDataManager(object):
 
           #Hobby name column
           if ci == nameColumn:
-            hobbyCode = CsvDataManager.nameToCode( cell )
+            hobbyCode = DataManager.nameToCode( cell )
             c.execute( "INSERT INTO Hobby ( HobbyCode, Name ) VALUES ( ?, ? )", [hobbyCode, cell]  )
 
           #Skill columns
           if ci in skillColumns and len(cell.replace(" ","")) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] not in skillsInDb:
               skillsInDb.append(cellParts['code'])
               c.execute("INSERT INTO Skill (SkillCode, Name) VALUES ( ?, ?)", [cellParts['code'], cellParts['name']])
@@ -116,7 +177,7 @@ class CsvDataManager(object):
 
           #Needs columns
           if ci in needColumns and len(cell.replace(" ","")) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] not in needsInDb:
               needsInDb.append(cellParts['code'])
               c.execute("INSERT INTO Need (NeedCode, Name) VALUES ( ?, ?)", [cellParts['code'], cellParts['name']])
@@ -129,7 +190,7 @@ class CsvDataManager(object):
     skillColumns = []
     skillColumnMap = {}
     needColumns = []
-    f = open( CsvDataManager.setting('playerCardCsvPath') )
+    f = open( DataManager.setting('playerCardCsvPath') )
     playerFileCSV = csv.reader(f)
     for ri,row in enumerate(playerFileCSV):
 
@@ -143,7 +204,7 @@ class CsvDataManager(object):
             skillColumns.append(ci)
             parts = re.findall(r'([\w\s]+\w)\s+Skill', cell)
             skillName = parts[0]
-            skillCode = CsvDataManager.nameToCode(skillName)
+            skillCode = DataManager.nameToCode(skillName)
             skillColumnMap.update( {ci:skillName} )
             if skillCode not in skillsInDb:
               skillsInDb.append(skillCode)
@@ -159,7 +220,7 @@ class CsvDataManager(object):
 
           #Player name column
           if ci == nameColumn:
-            playerCode = CsvDataManager.nameToCode( cell )
+            playerCode = DataManager.nameToCode( cell )
             c.execute( "INSERT INTO Player ( PlayerCode, Name ) VALUES ( ?, ? )", [playerCode, cell]  )
 
           #Skill columns
@@ -168,7 +229,7 @@ class CsvDataManager(object):
 
           #Needs columns
           if ci in needColumns and len(cell) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] not in needsInDb:
               needsInDb.append(cellParts['code'])
               c.execute("INSERT INTO Need (NeedCode, Name) VALUES ( ?, ?)", [cellParts['code'], cellParts['name']])
@@ -182,7 +243,7 @@ class CsvDataManager(object):
     costColumn = -1 
     skillColumns = []
     needColumns = []
-    f = open( CsvDataManager.setting('childCardCsvPath') )
+    f = open( DataManager.setting('childCardCsvPath') )
     childFileCSV = csv.reader(f)
     for ri,row in enumerate(childFileCSV):
 
@@ -216,12 +277,12 @@ class CsvDataManager(object):
 
           #Name column
           if ci == nameColumn:
-            childCode = CsvDataManager.nameToCode( cell )
+            childCode = DataManager.nameToCode( cell )
             c.execute( "INSERT INTO Child ( ChildCode, Name, Cost ) VALUES ( ?, ?, 0 )", [childCode, cell]  )
 
           #Skill columns
           if ci in skillColumns and len(cell) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] not in skillsInDb:
               skillsInDb.append(cellParts['code'])
               c.execute("INSERT INTO Skill (SkillCode, Name) VALUES ( ?, ?)", [cellParts['code'], cellParts['name']])
@@ -229,7 +290,7 @@ class CsvDataManager(object):
 
           #Needs columns
           if ci in needColumns and len(cell) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] not in needsInDb:
               needsInDb.append(cellParts['code'])
               c.execute("INSERT INTO Need (NeedCode, Name) VALUES ( ?, ?)", [cellParts['code'], cellParts['name']])
@@ -249,9 +310,9 @@ class CsvDataManager(object):
     financesColumn = -1 
     skillRequirementColumns = []
     needColumns = []
-    f = open( CsvDataManager.setting('partnerCardCsvPath') )
+    f = open( DataManager.setting('partnerCardCsvPath') )
     partnerFileCSV = csv.reader(f)
-    partnerMaxRow = CsvDataManager.setting('partnerCardCsvMaxRow');
+    partnerMaxRow = DataManager.setting('partnerCardCsvMaxRow');
     for ri,row in enumerate(partnerFileCSV):
 
       # header row: determine what each column is
@@ -284,12 +345,12 @@ class CsvDataManager(object):
 
           #Name column
           if ci == nameColumn:
-            partnerCode = CsvDataManager.nameToCode( cell )
+            partnerCode = DataManager.nameToCode( cell )
             c.execute( "INSERT INTO Partner ( PartnerCode, Name, Finances, MoneyRequirement ) VALUES ( ?, ?, 0, 0 )", [partnerCode, cell]  )
 
           #Skill columns
           if ci in skillRequirementColumns and len(cell) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] == 'Savings':
               c.execute( "UPDATE Partner SET MoneyRequirement=? WHERE PartnerCode=?", [cellParts['value'], partnerCode]  )
             else:
@@ -300,7 +361,7 @@ class CsvDataManager(object):
 
           #Needs columns
           if ci in needColumns and len(cell) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] not in needsInDb:
               needsInDb.append(cellParts['code'])
               c.execute("INSERT INTO Need (NeedCode, Name) VALUES ( ?, ?)", [cellParts['code'], cellParts['name']])
@@ -320,9 +381,9 @@ class CsvDataManager(object):
     payColumn = -1 
     skillRequirementColumns = []
     needColumns = []
-    f = open( CsvDataManager.setting('jobCardCsvPath') )
+    f = open( DataManager.setting('jobCardCsvPath') )
     jobFileCSV = csv.reader(f)
-    jobMaxRow = CsvDataManager.setting('jobCardCsvMaxRow');
+    jobMaxRow = DataManager.setting('jobCardCsvMaxRow');
     for ri,row in enumerate(jobFileCSV):
 
       # header row: determine what each column is
@@ -355,12 +416,12 @@ class CsvDataManager(object):
 
           #Name column
           if ci == nameColumn:
-            jobCode = CsvDataManager.nameToCode( cell )
+            jobCode = DataManager.nameToCode( cell )
             c.execute( "INSERT INTO Job ( JobCode, Name, Pay ) VALUES ( ?, ?, 0 )", [jobCode, cell]  )
 
           #Skill columns
           if ci in skillRequirementColumns and len(cell) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] not in skillsInDb:
               skillsInDb.append(cellParts['code'])
               c.execute("INSERT INTO Skill (SkillCode, Name) VALUES ( ?, ?)", [cellParts['code'], cellParts['name']])
@@ -368,7 +429,7 @@ class CsvDataManager(object):
 
           #Needs columns
           if ci in needColumns and len(cell) > 0:
-            cellParts = CsvDataManager.parseNameValueCell( cell )
+            cellParts = DataManager.parseNameValueCell( cell )
             if cellParts['code'] not in needsInDb:
               needsInDb.append(cellParts['code'])
               c.execute("INSERT INTO Need (NeedCode, Name) VALUES ( ?, ?)", [cellParts['code'], cellParts['name']])
@@ -381,7 +442,4 @@ class CsvDataManager(object):
             if len( re.findall( r'[^-0-9]', cell ) ) == 0:
               c.execute( "UPDATE Job SET Pay=? WHERE JobCode=?", [cell, jobCode]  )
 
-    conn.commit()
-    conn.close()
-
-
+    DataManager.closeConnection()

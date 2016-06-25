@@ -1,4 +1,4 @@
-from CsvDataManager import CsvDataManager
+from DataManager import DataManager
 
-CsvDataManager.csvToDb()
+DataManager.csvToDb()
 print 'done'
