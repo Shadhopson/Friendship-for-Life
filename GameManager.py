@@ -13,7 +13,10 @@ class PlayerCard(object):
 
 class HobbyCard(object):
   def __init__(self, code ):
+    hobby_row = DataManager.getRow( "SELECT * FROM Hobby WHERE HobbyCode=?", [code] )
+
     self.code = code
+    self.expense = hobby_row['Expense']
     self.skills = DataManager.getRows( "SELECT * FROM HobbySkill WHERE HobbyCode=?", [code] )
     self.needs = DataManager.getRows( "SELECT * FROM HobbyNeed WHERE HobbyCode=?", [code] )
 
@@ -37,6 +40,7 @@ class JobCard(object):
     self.skillRequirements = DataManager.getRows( "SELECT * FROM JobSkillRequirement WHERE JobCode=?", [code] )
     self.needs = DataManager.getRows( "SELECT * FROM JobNeed WHERE JobCode=?", [code] )
 
+  def onAdd(self):
     if self.code == 'Artist':
       self.pay = random.randint(1,6)
     elif self.code == 'SportPlayer':
@@ -64,6 +68,7 @@ class Player(object):
     self.playerNeedModifications = {}
     self.money = money
     self.trustTokens = trustTokens
+    self.hasBankruptcy = False
     self.children = []
     self.partners = []
     self.partnerSkillModifications = {}
@@ -143,7 +148,7 @@ class Player(object):
   def dropHobby( self, hobby ):
     self.hobbies.remove(hobby)
 
-  # gets players current stats (after modifications)
+  # gets players current need stats (after modifications)
   def needStats(self):
     stats = {}
     for need in self.playerCard.needs:
@@ -154,6 +159,7 @@ class Player(object):
       stats[code] = val
     return stats
 
+  # calculates how many points of each need player is currently fulfilling
   def needFulfillmentStats(self):
     stats = {}
     for job in self.jobs:
@@ -184,6 +190,7 @@ class Player(object):
 
     return stats
 
+  # calculates current # of points player has earned
   def points(self):
     needStats = self.needStats()
     needFulfillmentStats = self.needFulfillmentStats()
@@ -192,7 +199,10 @@ class Player(object):
       needVal = needStats[needStat]
       if needStat in needFulfillmentStats:
         if needFulfillmentStats[needStat] >= needVal:
-          points += 1 
+          if needStat == 'Money':
+            points += 1
+          else:
+            points += needVal
 
     for job in self.jobs:
       jobRes = self.isJobCheckPass(job)
@@ -207,6 +217,9 @@ class Player(object):
         points += 1
       else:
         points -= 1
+
+    if self.hasBankruptcy:
+      points -= 1
     
     return points
 
@@ -218,6 +231,13 @@ class Player(object):
       code = skill['SkillCode']
       val += self.playerSkillModifications[code]
       stats[code] =  val 
+    for hobby in self.hobbies:
+      for skill in hobby.skills:
+        stats[skill['SkillCode']] += skill['Value']
+    for child in self.children:
+      for skill in child.skills:
+        stats[skill['SkillCode']] += skill['Value']
+
     return stats
 
   # gets jobs required stats (after modifications)
@@ -279,7 +299,9 @@ class Player(object):
 
   # returns current level of time committed to cards
   def currentTime(self):
-    time = GameManager.setting("childTime") * len(self.children)
+    time = GameManager.setting("childTime")
+    if GameManager.setting("isChildTimeFlat") == False:
+      time = time * len(self.children)
     time += GameManager.setting("partnerTime") * len(self.partners)
     time += GameManager.setting("jobTime") * len(self.jobs)
     time += GameManager.setting("hobbyTime") * len(self.hobbies)
@@ -291,18 +313,21 @@ class Player(object):
       payment += self.jobPayModifications[job.code]
     return payment
 
+  def childrenExpenses(self):
+    return len(self.children) * GameManager.setting("childExpense")
+
+  def hobbyExpenses(self,hobby):
+    return hobby.expense
+
+  def partnerFinances(self, partner):
+    return partner.finances
+
 
 class Game(object):
 
   def __init__(self):
-    self.currentRound = 1
-    self.currentPlayerIndex = 0
-    self.totalRounds = GameManager.setting("totalRounds")
-    self.steps = [ 'morning', 'evening', 'night' ]
-    self.currentStep = 'morning'
+
     self.decisionMaker = RandomDecisionMaker()
-    self.gameLog = []
-    self.players = []
 
     self.playerCardDeck = []
     self.hobbyCardDeck = []
@@ -310,32 +335,57 @@ class Game(object):
     self.childCardDeck = []
     self.jobCardDeck = []
 
+    self.players = []
+
     #Initialize and shuffle all decs
     playerCardRows = DataManager.getRows( "SELECT PlayerCode FROM Player" )
     for playerCard in playerCardRows:
       self.playerCardDeck.append( PlayerCard(playerCard['PlayerCode']) )
-    random.shuffle( self.playerCardDeck )
 
     hobbyCardRows = DataManager.getRows( "SELECT HobbyCode FROM Hobby" )
     for hobbyCard in hobbyCardRows:
       self.hobbyCardDeck.append( HobbyCard(hobbyCard['HobbyCode']) )
-    random.shuffle( self.hobbyCardDeck )
 
     partnerCardRows = DataManager.getRows( "SELECT PartnerCode FROM Partner" )
     for partnerCard in partnerCardRows:
       self.partnerCardDeck.append( PartnerCard(partnerCard['PartnerCode']) )
-    random.shuffle( self.partnerCardDeck )
 
     childCardRows = DataManager.getRows( "SELECT ChildCode FROM Child" )
     for childCard in childCardRows:
       self.childCardDeck.append( ChildCard(childCard['ChildCode']) )
-    random.shuffle( self.childCardDeck )
 
     jobCardRows = DataManager.getRows( "SELECT JobCode FROM Job" )
     for jobCard in jobCardRows:
       self.jobCardDeck.append( JobCard(jobCard['JobCode']) )
+
+    self.resetGame()
+
+  def resetGame(self):
+
+    for player in self.players:
+      for child in player.children:
+        self.childCardDeck.append(child)
+      for job in player.jobs:
+        self.jobCardDeck.append(job)
+      for hobby in player.hobbies:
+        self.hobbyCardDeck.append(hobby)
+      for partner in player.partners:
+        self.partnerCardDeck.append(partner)
+      self.playerCardDeck.append(player.playerCard)
+
+    random.shuffle( self.playerCardDeck )
+    random.shuffle( self.hobbyCardDeck )
+    random.shuffle( self.partnerCardDeck )
+    random.shuffle( self.childCardDeck )
     random.shuffle( self.jobCardDeck )
 
+    self.currentRound = 1
+    self.currentPlayerIndex = 0
+    self.totalRounds = GameManager.setting("totalRounds")
+    self.steps = [ 'morning', 'evening', 'night' ]
+    self.currentStep = 'morning'
+    self.gameLog = []
+    self.players = []
 
   #Adds a player to the game by taking card out of player card dec
   #if playerCode is passed in, will search through deck instead of drawing the next card
@@ -379,6 +429,12 @@ class Game(object):
         ret.append( { 'action': 'hobbySearch' } )
       if self.currentPlayer().currentTime() + GameManager.setting("partnerTime") <= GameManager.setting("maxTime"):
         ret.append( { 'action': 'partnerSearch' } )
+
+      if GameManager.setting("isChildTimeFlat") and len(self.currentPlayer().children):
+        ret.append( { 'action': 'childAttempt' } )
+      elif self.currentPlayer().currentTime() + GameManager.setting("childTime") <= GameManager.setting("maxTime"):
+        ret.append( { 'action': 'childAttempt' } )
+
       ret.append( { 'action': 'pass' } )
 
     elif self.currentStep == 'night':
@@ -396,12 +452,15 @@ class Game(object):
   # action= the index of the action returned from nextStepAvailableActions()
   def performNextStep( self, action=None ):
 
+    self.logPlayers()
+
     #create log
-    log = { "round": self.currentRound, "player": self.currentPlayer().playerCard.code, 'currentStep': self.currentStep }
+    log = { "Round": self.currentRound, "Player": self.currentPlayer().playerCard.code, 'CurrentStep': self.currentStep }
+    log['Type'] = 'Action'
     if action != None:
       action_ops = self.nextStepAvailableActions()
       action = action_ops[action]
-      log.update(action)
+      log["Decision"] = action
     else:
       raise ValueError( self.nextStepAvailableActions() )
 
@@ -413,14 +472,15 @@ class Game(object):
       revealedCards = []
       for i in range(GameManager.setting("jobSearchNumCards")):
         nextJobCard = self.jobCardDeck.pop()
-        actions.append( {'action':'addJob','jobCard':nextJobCard} )
+        actions.append( {'action':'addJob','jobCard':nextJobCard.code} )
         revealedCards.append(nextJobCard)
       decision = self.decisionMaker.makeDecision( self, actions )
       actionResponse = actions[decision]
+      log["Decision2"] = actionResponse
       for i in revealedCards:
-        if actionResponse['action'] == 'addJob' and i == actionResponse['jobCard']:
+        if actionResponse['action'] == 'addJob' and i.code == actionResponse['jobCard']:
           self.currentPlayer().jobs.append( i )
-          log[ "addedJob"] = i.code 
+          i.onAdd()
         else:
           self.jobCardDeck.insert( 0,i )
 
@@ -429,14 +489,14 @@ class Game(object):
       revealedCards = []
       for i in range(GameManager.setting("hobbySearchNumCards")):
         nextHobbyCard = self.hobbyCardDeck.pop()
-        actions.append( {'action':'addHobby','hobbyCard':nextHobbyCard} )
+        actions.append( {'action':'addHobby','hobbyCard':nextHobbyCard.code} )
         revealedCards.append(nextHobbyCard)
       decision = self.decisionMaker.makeDecision( self, actions )
       actionResponse = actions[decision]
+      log["Decision2"] = actionResponse
       for i in revealedCards:
-        if actionResponse['action'] == 'addHobby' and i == actionResponse['hobbyCard']:
+        if actionResponse['action'] == 'addHobby' and i.code == actionResponse['hobbyCard']:
           self.currentPlayer().hobbies.append( i )
-          log[ "addedHobby"] = i.code 
         else:
           self.hobbyCardDeck.insert( 0,i )
 
@@ -446,15 +506,21 @@ class Game(object):
       for i in range(GameManager.setting("partnerSearchNumCards")):
         nextPartnerCard = self.partnerCardDeck.pop()
         revealedCards.append( nextPartnerCard )
-        actions.append( {'action':'addPartner','partnerCard':nextPartnerCard} )
+        actions.append( {'action':'addPartner','partnerCard':nextPartnerCard.code} )
       decision = self.decisionMaker.makeDecision( self, actions )
       actionResponse = actions[decision]
+      log["Decision2"] = actionResponse
       for i in revealedCards:
-        if actionResponse['action'] == 'addPartner' and actionResponse['partnerCard'] == i:
+        if actionResponse['action'] == 'addPartner' and actionResponse['partnerCard'] == i.code:
           self.currentPlayer().partners.append( i )
-          log[ "addedPartner"] = i.code 
         else:
           self.partnerCardDeck.insert( 0,i )
+
+    elif action['action'] == 'childAttempt':
+      roll = random.randint(1,GameManager.setting("childAttemptDiceSides"))
+      if roll >= GameManager.setting("childAttemptMinSuccess"):
+        nextChildCard = self.childCardDeck.pop()
+        self.currentPlayer().children.append(nextChildCard)
 
     elif action['action'] == 'quitJob':
       for job in self.currentPlayer().jobs:
@@ -566,9 +632,30 @@ class Game(object):
 
 
     if self.currentStep == 'night':
+
       # get paid
       for job in self.currentPlayer().jobs:
         self.currentPlayer().money += self.currentPlayer().jobPayment(job)
+
+      # pay for children
+      self.currentPlayer().money -= self.currentPlayer().childrenExpenses()
+
+      # pay for life
+      self.currentPlayer().money -= GameManager.setting("baseLifeExpense")
+
+      # pay for hobbies 
+      for hobby in self.currentPlayer().hobbies:
+        self.currentPlayer().money += self.currentPlayer().hobbyExpenses(hobby)
+
+      # partner finances
+      for partner in self.currentPlayer().partners:
+        self.currentPlayer().money += self.currentPlayer().partnerFinances(partner)
+
+      if self.currentPlayer().money < 0:
+        self.currentPlayer().money = 0
+        self.currentPlayer().hasBankruptcy = True
+
+    self.gameLog.append(log)
 
     #move to next step
     if self.currentStep == 'morning':
@@ -579,7 +666,6 @@ class Game(object):
       if self.currentPlayerIndex+1 < len(self.players):
         self.currentPlayerIndex += 1
       elif self.currentRound < self.totalRounds:
-        self.logPlayers()
         self.currentPlayerIndex = 0
         self.currentRound += 1
       # END GAME
@@ -589,11 +675,11 @@ class Game(object):
 
       self.currentStep = 'morning'
 
-    self.gameLog.append(log)
 
   def logPlayers( self ):
     for player in self.players:
       log = {}
+      log["Type"] = "GameState"
       log["Points"] = player.points()
       log['PlayerCode']  = player.playerCard.code
       log['Time']  = player.currentTime()
@@ -602,58 +688,61 @@ class Game(object):
       log["Money"] = player.money
       log["TrustTokens"] = player.trustTokens
 
-      skillStats = player.skillStats()
-      for skill in skillStats:
-        log["Skill_%s"%skill] = skillStats[skill]
-
-      needStats = player.needStats()
-      for need in needStats:
-        log["Need_%s"%need] = needStats[need]
-
+      log["NeedMods"] = {}
       for needMod in player.playerNeedModifications:
-        log["NeedMod_%s"%needMod] = player.playerNeedModifications[needMod]
+        log["NeedMods"][needMod] = player.playerNeedModifications[needMod]
 
-      fulfillmentStats = player.needFulfillmentStats()
-      for need in fulfillmentStats:
-        log["NeedFulfillment_%s"%need] = fulfillmentStats[need]
-
+      log["Partners"] = []
       for partner in player.partners:
-        log["Partner_%s"%partner.code] = 1
+        log["Partners"].append( partner.code )
 
+      log["PartnerSkillMods"] = {}
       for partnerCode in player.partnerSkillModifications:
+        log["PartnerSkillMods"][partnerCode] = {}
         for skillCode in player.partnerSkillModifications[partnerCode]:
-          log["PartnerSkillMod_%s_%s"%(partnerCode,skillCode)] = player.partnerSkillModifications[partnerCode][skillCode]
+          log["PartnerSkillMods"][partnerCode][skillCode] = player.partnerSkillModifications[partnerCode][skillCode]
 
+      log["PartnerFiredCounts"] = {}
       for partnerCode in player.partnerFiredCounts:
-        log["PartnerFireCount_%s"%partnerCode] = player.partnerFiredCounts[partnerCode]
+        log["PartnerFiredCounts"][partnerCode] = player.partnerFiredCounts[partnerCode]
 
+      log["PartnerPassedCounts"] = {}
       for partnerCode in player.partnerPassedCounts:
-        log["PartnerPassCount_%s"%partnerCode] = player.partnerPassedCounts[partnerCode]
+        log["PartnerPassedCounts"][partnerCode] = player.partnerPassedCounts[partnerCode]
 
+      log["Children"] = []
       for child in player.children:
-        log["Child_%s"%child.code] = 1
+        log["Children"].append( child.code )
 
+      log["SkillMods"] = {}
       for skillMod in player.playerSkillModifications:
-        log["SkillMod_%s"%skillMod] = player.playerSkillModifications[skillMod]
+        log["SkillMods"][skillMod] = player.playerSkillModifications[skillMod]
 
+      log["Hobbies"] = []
       for hobby in player.hobbies:
-        log["Hobby_%s"%hobby.code] = 1
+        log["Hobbies"].append( hobby.code )
 
+      log["Jobs"] = []
       for job in player.jobs:
-        log["Job_%s"%job.code] = 1
+        log["Jobs"].append( {"JobCode": job.code, "Pay": job.pay } )
 
+      log["JobPayMods"] = {}
       for jobCode in player.jobPayModifications:
-        log["JobPayMod_%s"%jobCode] = player.jobPayModifications[jobCode]
+        log["JobPayMods"][jobCode] = player.jobPayModifications[jobCode]
 
+      log["JobSkillMods"] = {}
       for jobCode in player.jobSkillModifications:
+        log["JobSkillMods"][jobCode] = {}
         for skillCode in player.jobSkillModifications[jobCode]:
-          log["JobSkillMod_%s_%s"%(jobCode,skillCode)] = player.jobSkillModifications[jobCode][skillCode]
+          log["JobSkillMods"][jobCode][skillCode] = player.jobSkillModifications[jobCode][skillCode]
 
+      log["JobFiredCounts"] = {}
       for jobCode in player.jobFiredCounts:
-        log["JobFireCount_%s"%jobCode] = player.jobFiredCounts[jobCode]
+        log["JobFiredCounts"][jobCode] = player.jobFiredCounts[jobCode]
 
+      log["JobPassedCounts"] = {}
       for jobCode in player.jobPassedCounts:
-        log["JobPassCount_%s"%jobCode] = player.jobPassedCounts[jobCode]
+        log["JobPassedCounts"][jobCode] = player.jobPassedCounts[jobCode]
 
       game.gameLog.append(log)
 
@@ -681,13 +770,19 @@ class RandomDecisionMaker:
     choice = random.randint(0,len(options)-1)
     return choice
 
-
+#DataManager.clearGameLogDb()
 game = Game()
-game.addPlayer()
+for i in range(len(game.playerCardDeck)):
+  for j in range(1000):
+    if j%100 == 0:
+      print "Player%d - round %d"%(i+1,j)
+    game.resetGame()
+    game.addPlayer( "Player%d"%(i+1) )
+    while game.isNextStep():
+      game.performNextStep( game.decisionMaker.makeDecision( game, game.nextStepAvailableActions() ) )
+    DataManager.insertGameLogIntoDb(game.gameLog)
 
-while game.isNextStep():
-  game.performNextStep( game.decisionMaker.makeDecision( game, game.nextStepAvailableActions() ) )
-
+exit()
 csvOutFile = open( GameManager.setting('gameLogOutCsvPath'), 'wb' )
 wr = csv.writer( csvOutFile, quoting=csv.QUOTE_ALL )
 for row in game.gameLog:

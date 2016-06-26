@@ -4,20 +4,24 @@
 
   "startingMoney": 3,
   "startingTrustTokens": 3,
-  "totalRounds": 100,
+  "totalRounds": 8,
 
   "jobSearchNumCards": 2,
   "hobbySearchNumCards": 1,
   "partnerSearchNumCards": 2,
 
-  "maxTime": 4,
-  "childTime": 2,
+  "childExpense": 1,
+  "baseLifeExpense": 1,
+
+  "maxTime": 6,
   "partnerTime": 2,
   "jobTime": 2,
-  "hobbyTime": 2,
+  "childTime": 1,
+  "hobbyTime": 1,
+  "isChildTimeFlat": true,
 
   "childAttemptDiceSides": 6,
-  "childAttemptMinSuccess": 3,
+  "childAttemptMinSuccess": 4,
 
   "eventRollPromotion": [1],
   "eventRollJobSkillIncrease": [2], 
