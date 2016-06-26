@@ -4,11 +4,7 @@
 
   "startingMoney": 3,
   "startingTrustTokens": 3,
-  "totalRounds": 1000,
-
-  "startingMoney": 3,
-  "startingTrustTokens": 3,
-  "totalRounds": 1000,
+  "totalRounds": 100,
 
   "jobSearchNumCards": 2,
   "hobbySearchNumCards": 1,

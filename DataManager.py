@@ -21,38 +21,35 @@ def get_row(q):
 
 class DataManager(object):
 
-  conn = None
+  conn = {}
   settings = []
   settingFilePath = 'DataManager.json'
 
   #connection to DB
   @staticmethod
-  def connection():
-    if DataManager.conn == None:
-      DataManager.conn = sqlite3.connect( DataManager.setting('dbPath') )
-      DataManager.conn.row_factory = dict_factory 
-    return DataManager.conn
+  def connection(conn=None):
+    if conn == None:
+      conn = 'defaultConn'
+    if conn not in DataManager.conn:
+      dbPathVar = DataManager.setting(conn)
+      DataManager.conn[conn] = sqlite3.connect( DataManager.setting(dbPathVar) )
+      DataManager.conn[conn].row_factory = dict_factory 
+    return DataManager.conn[conn]
 
   #get rows from DB
   @staticmethod
-  def getRows(q,ops=None):
-    if ops != None:
-      return get_rows( DataManager.execute(q,ops) )
-    else:
-      return get_rows( DataManager.execute(q) )
+  def getRows(q,ops=None,conn=None):
+    return get_rows( DataManager.execute(q,ops,conn) )
 
   #get rows from DB
   @staticmethod
-  def getRow(q,ops=None):
-    if ops != None:
-      return get_row( DataManager.execute(q,ops) )
-    else:
-      return get_row( DataManager.execute(q) )
+  def getRow(q,ops=None,conn=None):
+    return get_row( DataManager.execute(q,ops,conn) )
 
   #get rows from DB
   @staticmethod
-  def execute(q,ops=None):
-    conn = DataManager.connection()
+  def execute(q,ops=None,conn=None):
+    conn = DataManager.connection(conn)
     if ops != None:
       return conn.cursor().execute(q,ops)
     else:
@@ -60,10 +57,12 @@ class DataManager(object):
 
   #close connection to DB
   @staticmethod
-  def closeConnection():
-    if DataManager.conn:
-      DataManager.conn.commit()
-      DataManager.conn.close()
+  def closeConnection(conn=None):
+    if conn == None:
+      conn = 'defaultConn'
+    if conn in DataManager.conn:
+      DataManager.conn[conn].commit()
+      DataManager.conn[conn].close()
 
   #Manages class settings loaded from DataManager.json
   @staticmethod
@@ -443,3 +442,79 @@ class DataManager(object):
               c.execute( "UPDATE Job SET Pay=? WHERE JobCode=?", [cell, jobCode]  )
 
     DataManager.closeConnection()
+
+  @staticmethod
+  def createGameDataTable():
+    skills = DataManager.getRows( "SELECT * FROM Skill" )
+    skill_codes = []
+    for skill in skills:
+      skill_codes.append(skill['SkillCode'])
+
+    needs = DataManager.getRows( "SELECT * FROM Need" )
+    need_codes = []
+    for need in needs:
+      need_codes.append(need['NeedCode'])
+
+    jobs = DataManager.getRows( "SELECT * FROM Job" )
+    job_codes = []
+    for job in jobs:
+      job_codes.append(job['JobCode'])
+
+    children = DataManager.getRows( "SELECT * FROM Child" )
+    child_codes = []
+    for child in children:
+      child_codes.append(child['ChildCode'])
+
+    hobbies = DataManager.getRows( "SELECT * FROM Hobby" )
+    hobby_codes = []
+    for hobby in hobbies:
+      hobby_codes.append(hobby['HobbyCode'])
+
+    partners = DataManager.getRows( "SELECT * FROM Partner" )
+    partner_codes = []
+    for partner in partners:
+      partner_codes.append(partner['PartnerCode'])
+
+    fields = ['PlayerCode','Time','Round','Step','Money','TrustTokens']
+    for skill in skill_codes:
+      fields.append("Skill_%s"%skill)
+      fields.append("SkillMod_%s"%skill)
+
+    for need in need_codes:
+      fields.append("Need_%s"%need)
+      fields.append("NeedMod_%s"%need)
+      fields.append("NeedFulfillment_%s"%need)
+
+    for job in job_codes:
+      fields.append("Job_%s"%job)
+      fields.append("JobPayMod_%s"%job)
+      fields.append("JobFireCount_%s"%job)
+      fields.append("JobPassCount_%s"%job)
+      for skill in skill_codes:
+        fields.append("JobSkillMod_%s_%s"%(job,skill))
+
+    for partner in partner_codes:
+      fields.append("Partner_%s"%partner)
+      fields.append("PartnerFireCount_%s"%partner)
+      fields.append("PartnerPassCount_%s"%partner)
+      for skill in skill_codes:
+        fields.append("PartnerSkillMod_%s_%s"%(partner,skill))
+
+    for hobby in hobby_codes:
+      fields.append("Hobby_%s"%hobby)
+
+    for child in child_codes:
+      fields.append("Child_%s"%child)
+
+    text_fields = ['PlayerCode','Time','Step']
+    field_defs = []
+    for field in fields:
+      f_type = 'INTEGER'
+      if field in text_fields:
+        f_type = 'TEXT'
+      field_defs.append( "%s %s"%(field,f_type) )
+    insert_q = "CREATE TABLE GameData ( %s )"%", ".join(field_defs)
+    DataManager.execute( insert_q, None, "gameConn" )
+    DataManager.closeConnection("gameConn")
+
+DataManager.createGameDataTable()

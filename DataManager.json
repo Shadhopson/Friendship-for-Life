@@ -9,7 +9,12 @@
 
   "partnerCardCsvMaxRow": 9,
 
+  "defaultConn": "dbPath",
   "dbPath": "test.db",
+
+  "gameConn": "gameResultsDbPath",
+  "gameResultsDbPath": "gameOut.db",
+
   "codeAliases": {
     "PhysicalExercise": "Exercise",
     "Confident": "Confidence"
