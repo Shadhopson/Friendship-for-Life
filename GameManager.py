@@ -37,6 +37,14 @@ class JobCard(object):
     self.skillRequirements = DataManager.getRows( "SELECT * FROM JobSkillRequirement WHERE JobCode=?", [code] )
     self.needs = DataManager.getRows( "SELECT * FROM JobNeed WHERE JobCode=?", [code] )
 
+    if self.code == 'Artist':
+      self.pay = random.randint(1,6)
+    elif self.code == 'SportPlayer':
+      roll = random.randint(1,6)
+      if roll == 6:
+        self.pay = 8
+      else:
+        self.pay = 1
 
 class PartnerCard(object):
   def __init__(self, code ):
@@ -51,10 +59,12 @@ class PartnerCard(object):
 
 class Player(object):
 
-  def __init__(self, playerCard, money ):
+  def __init__(self, playerCard, money, trustTokens ):
     self.playerCard = playerCard
     self.playerSkillModifications = {}
+    self.playerNeedModifications = {}
     self.money = money
+    self.trustTokens = trustTokens
     self.children = []
     self.partners = []
     self.partnerSkillModifications = {}
@@ -65,6 +75,28 @@ class Player(object):
 
     for skill in self.playerCard.skills:
       self.playerSkillModifications.update( {skill['SkillCode']:0} )
+
+  def modifyNeed( self, needCode, value ):
+    if needCode not in self.playerNeedModifications:
+      self.playerNeedModifications[needCode] = 0
+    self.playerNeedModifications[needCode] += value
+
+  def modifySkill( self, skillCode, value ):
+    if skillCode not in self.playerSkillModifications:
+      self.playerSkillModifications[skillCode] = 0
+    self.playerSkillModifications[skillCode] += value
+
+
+  # gets players current stats (after modifications)
+  def needStats(self):
+    stats = {}
+    for need in self.playerCard.needs:
+      val = need['Value']
+      code = need['NeedCode']
+      if code in self.playerNeedModifications:
+        val += self.playerNeedModifications[code]
+      stats.update({ code: val } )
+    return stats
 
   # gets players current stats (after modifications)
   def skillStats(self):
@@ -99,31 +131,53 @@ class Player(object):
   def isJobCheckPass(self,job):
     reqs = self.jobSkillRequirements(job)
     stats = self.skillStats()
-    isPass = True
+    res = "pass"
     for req in reqs:
-      if stats[req] < reqs[req]:
-        isPass = False
+      if stats[req] > reqs[req]:
+        res = "exceed"
+      elif stats[req] < reqs[req]:
+        res = "fail"
         break
-    return isPass
+    return res
 
   # checks if player passes a partner check
   def isPartnerCheckPass(self,partner):
     reqs = self.partnerSkillRequirements(partner)
     stats = self.skillStats()
-    isPass = True
+    res = "pass"
     for req in reqs:
-      if stats[req] < reqs[req]:
-        isPass = False
+      if stats[req] > reqs[req]:
+        res = "exceed"
+      elif stats[req] < reqs[req]:
+        res = "fail"
         break
-    return isPass
+    return res
 
-  # returns current level of effort committed to cards
-  def currentEffort(self):
-    effort = GameManager.setting("childEffort") * len(self.children)
-    effort += GameManager.setting("partnerEffort") * len(self.partners)
-    effort += GameManager.setting("jobEffort") * len(self.jobs)
-    effort += GameManager.setting("hobbyEffort") * len(self.hobbies)
-    return effort
+  # checks if player passes a partner check
+  def isNeedCheckPass(self,need):
+    needs = self.needStats()
+    res = "pass"
+    for req in reqs:
+      if stats[req] > reqs[req]:
+        res = "exceed"
+      elif stats[req] < reqs[req]:
+        res = "fail"
+        break
+    return res
+
+  # returns current level of time committed to cards
+  def currentTime(self):
+    time = GameManager.setting("childTime") * len(self.children)
+    time += GameManager.setting("partnerTime") * len(self.partners)
+    time += GameManager.setting("jobTime") * len(self.jobs)
+    time += GameManager.setting("hobbyTime") * len(self.hobbies)
+    return time
+
+  def jobPayment(self,job):
+    payment = job.pay
+    if job.code in self.jobPayModifications:
+      payment += self.jobPayModifications[job.code]
+    return payment
 
 
 class Game(object):
@@ -184,7 +238,7 @@ class Game(object):
     else:
       newPlayerCard = self.playerCardDeck.pop()
 
-    newPlayer = Player(newPlayerCard, GameManager.setting("startingMoney") )
+    newPlayer = Player(newPlayerCard, GameManager.setting("startingMoney"), GameManager.setting("startingTrustTokens") )
     self.players.append( newPlayer )
 
     if self.currentPlayerIndex == None:
@@ -207,11 +261,11 @@ class Game(object):
       ret.append( { 'action': 'pass' } )
 
     elif self.currentStep == 'evening':
-      if self.currentPlayer().currentEffort() + GameManager.setting("jobEffort") <= GameManager.setting("maxEffort"):
+      if self.currentPlayer().currentTime() + GameManager.setting("jobTime") <= GameManager.setting("maxTime"):
         ret.append( { 'action': 'jobSearch' } )
-      if self.currentPlayer().currentEffort() + GameManager.setting("hobbyEffort") <= GameManager.setting("maxEffort"):
+      if self.currentPlayer().currentTime() + GameManager.setting("hobbyTime") <= GameManager.setting("maxTime"):
         ret.append( { 'action': 'hobbySearch' } )
-      if self.currentPlayer().currentEffort() + GameManager.setting("partnerEffort") <= GameManager.setting("maxEffort"):
+      if self.currentPlayer().currentTime() + GameManager.setting("partnerTime") <= GameManager.setting("maxTime"):
         ret.append( { 'action': 'partnerSearch' } )
       ret.append( { 'action': 'pass' } )
 
@@ -238,6 +292,8 @@ class Game(object):
       log.update(action)
 
     #perform action
+    elif action['action'] == 'hangOut':
+      self.currentPlayer().trustTokens += 1
     if action['action'] == 'jobSearch':
       actions = [{'action':'pass'}]
       revealedCards = []
@@ -313,12 +369,13 @@ class Game(object):
         if len(self.currentPlayer().jobs):
           jobIndex = random.randint( 0,len(self.currentPlayer().jobs)-1 )
           job = self.currentPlayer().jobs[jobIndex]
-          isPass = self.currentPlayer().isJobCheckPass(job)
-          if isPass:
-            jobStats = self.currentPlayer().jobSkillRequirements(job)
-            stat = random.choice( jobStats.keys() )
-            self.currentPlayer().playerSkillModifications[stat] += 1
-            log.update( { "playerSkillIncreased": stat } )
+          stat = random.choice( self.currentPlayer().skillStats().keys() )
+          self.currentPlayer().modifySkill( stat, 1 )
+          if job.code not in self.currentPlayer().jobPayModifications:
+            self.currentPlayer().jobPayModifications.update( {job.code: 0} )
+          self.currentPlayer().jobPayModifications[job.code] += 1
+          log.update( { "playerSkillIncreased": stat } )
+          log.update( { "jobPayIncrease": job.code } )
 
       elif eventRoll in GameManager.setting('eventRollJobSkillIncrease'):
         log.update( { "eventRoll":"JobSkillIncrease" } )
@@ -350,12 +407,54 @@ class Game(object):
 
       elif eventRoll in GameManager.setting('eventRollJobCheckIn'):
         log.update( { "eventRoll":"JobCheckIn" } )
+        if len(self.currentPlayer().jobs):
+          jobIndex = random.randint( 0,len(self.currentPlayer().jobs)-1 )
+          job = self.currentPlayer().jobs[jobIndex]
+          isPass = self.currentPlayer().isJobCheckPass(job)
+          log.update( { "jobCheckRes":"%s - %s"%(job.code,isPass) } )
+          if isPass == 'pass':
+            None
+          elif isPass == 'exceed':
+            if job.code not in self.currentPlayer().jobPayModifications:
+              self.currentPlayer().jobPayModifications.update( {job.code: 0} )
+            self.currentPlayer().jobPayModifications[job.code] += 1
+            log.update( { "jobPayIncrease": job.code } )
+          else:
+            if job.code in self.currentPlayer().jobPayModifications:
+              self.currentPlayer().jobPayModifications[job.code] = 0
+            if job.code in self.currentPlayer().jobSkillModifications:
+              self.currentPlayer().jobSkillModifications[job.code] = {}
+            self.currentPlayer().jobs.remove(job)
+            self.jobCardDeck.insert(0,job)
+            log.update( { "firedFromJob": job.code } )
+
       elif eventRoll in GameManager.setting('eventRollRelationshipCheckIn'):
         log.update( { "eventRoll":"RelationshipCheckIn" } )
+        if len(self.currentPlayer().partners):
+          partnerIndex = random.randint( 0,len(self.currentPlayer().partners)-1 )
+          partner = self.currentPlayer().partners[partnerIndex]
+          isPass = self.currentPlayer().isPartnerCheckPass(partner)
+          log.update( { "partnerCheckRes":"%s - %s"%(partner.code,isPass) } )
+          if isPass == 'pass':
+            None
+          elif isPass == 'exceed':
+            None
+          else:
+            if partner.code in self.currentPlayer().partnerSkillModifications:
+              self.currentPlayer().partnerSkillModifications[partner.code] = {}
+            self.currentPlayer().partners.remove(partner)
+            self.partnerCardDeck.insert(0,partner)
+            log.update( { "firedFromPartner": partner.code } )
+
+
       elif eventRoll in GameManager.setting('eventRollFriendFight'):
         log.update( { "eventRoll":"FriendFight" } )
+        if self.currentPlayer().trustTokens > 0:
+          self.currentPlayer().trustTokens -= 1
+
       elif eventRoll in GameManager.setting('eventRollRelativeDeath'):
         log.update( { "eventRoll":"RelativeDeath" } )
+
       elif eventRoll in GameManager.setting('eventRollReferral'):
         log.update( { "eventRoll":"Referral" } )
       elif eventRoll in GameManager.setting('eventRollLoan'):
@@ -371,6 +470,12 @@ class Game(object):
       else:
         log.update( { "eventRoll":"Nothing" } )
 
+
+    if self.currentStep == 'night':
+      # get paid
+      for job in self.currentPlayer().jobs:
+        self.currentPlayer().money += self.currentPlayer().jobPayment(job)
+
     #move to next step
     if self.currentStep == 'morning':
       self.currentStep = 'evening'
@@ -380,6 +485,7 @@ class Game(object):
       if self.currentPlayerIndex+1 < len(self.players):
         self.currentPlayerIndex += 1
       elif self.currentRound < self.totalRounds:
+        self.logPlayers()
         self.currentPlayerIndex = 0
         self.currentRound += 1
       # END GAME
@@ -393,14 +499,29 @@ class Game(object):
   def logPlayers( self ):
     for player in self.players:
       log = {'playerCode': player.playerCard.code }
-      log.update(player.skillStats())
-      for job in player.jobs:
-        jobStr = 'Job(%s)'%(job.code)
-        passStr = 'Passing? %s'%(player.isJobCheckPass(job))
-        log.update( {jobStr:passStr} )
+      skillsArr = []
+      for skill in player.skillStats():
+        skillsArr.append( "%s:%s"%(skill,player.skillStats()[skill]) )
+      log.update({ "Player Skills": (", ".join(skillsArr) )})
 
+      needsArr = []
+      for need in player.needStats():
+        needsArr.append( "%s:%s"%(need,player.needStats()[need]) )
+      log.update({ "Player Needs": (", ".join(needsArr) )})
+
+      jobsArr = []
+      for job in player.jobs:
+        jobsArr.append( '%s:%s'%(job.code,player.isJobCheckPass(job)) )
+      log.update( {"Player Jobs":", ".join(jobsArr)} )
+
+      log.update( {"Player Money":player.money} )
+
+      log.update( {"Player Trust Tokens ":player.trustTokens} )
+
+      partnersArr = []
       for partner in player.partners:
-        log.update( {'Partner(%s)'%(partner.code): 'Passing? %s'%(player.isPartnerCheckPass(partner))} )
+        partnersArr.append( '%s:%s'%(partner.code,player.isPartnerCheckPass(partner)) )
+      log.update( {"Player Partners":", ".join(partnersArr)} )
 
       game.gameLog.append(log)
 
@@ -423,13 +544,6 @@ class GameManager(object):
     else:
       return None
 
-  def __init__(self, game, decisionMaker):
-    self.game = game
-    game.decisionMaker = decisionMaker 
-
-  def playNextAction(self):
-    something = 1
-
 class RandomDecisionMaker:
   def makeDecision( self, game, options ):
     choice = random.randint(0,len(options)-1)
@@ -442,7 +556,6 @@ game.addPlayer()
 
 while game.isNextStep():
   game.performNextStep( game.decisionMaker.makeDecision( game, game.nextStepAvailableActions() ) )
-game.logPlayers()
 
 csvOutFile = open( GameManager.setting('gameLogOutCsvPath'), 'wb' )
 wr = csv.writer( csvOutFile, quoting=csv.QUOTE_ALL )

@@ -1,16 +1,24 @@
 {
+  "loanAmount": 4,
+  "loanSavingGoalIncrease": 5,
+
   "startingMoney": 3,
+  "startingTrustTokens": 3,
+  "totalRounds": 1000,
+
+  "startingMoney": 3,
+  "startingTrustTokens": 3,
   "totalRounds": 1000,
 
   "jobSearchNumCards": 2,
   "hobbySearchNumCards": 1,
   "partnerSearchNumCards": 2,
 
-  "maxEffort": 4,
-  "childEffort": 2,
-  "partnerEffort": 2,
-  "jobEffort": 2,
-  "hobbyEffort": 2,
+  "maxTime": 4,
+  "childTime": 2,
+  "partnerTime": 2,
+  "jobTime": 2,
+  "hobbyTime": 2,
 
   "childAttemptDiceSides": 6,
   "childAttemptMinSuccess": 3,
