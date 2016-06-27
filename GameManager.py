@@ -744,7 +744,7 @@ class Game(object):
       for jobCode in player.jobPassedCounts:
         log["JobPassedCounts"][jobCode] = player.jobPassedCounts[jobCode]
 
-      game.gameLog.append(log)
+      self.gameLog.append(log)
 
 class GameManager(object):
   settings = []
@@ -770,24 +770,3 @@ class RandomDecisionMaker:
     choice = random.randint(0,len(options)-1)
     return choice
 
-#DataManager.clearGameLogDb()
-game = Game()
-for i in range(len(game.playerCardDeck)):
-  for j in range(1000):
-    if j%100 == 0:
-      print "Player%d - round %d"%(i+1,j)
-    game.resetGame()
-    game.addPlayer( "Player%d"%(i+1) )
-    while game.isNextStep():
-      game.performNextStep( game.decisionMaker.makeDecision( game, game.nextStepAvailableActions() ) )
-    DataManager.insertGameLogIntoDb(game.gameLog)
-
-exit()
-csvOutFile = open( GameManager.setting('gameLogOutCsvPath'), 'wb' )
-wr = csv.writer( csvOutFile, quoting=csv.QUOTE_ALL )
-for row in game.gameLog:
-  out_row = []
-  for k in row:
-    out_row.append( "%s: %s"%(k,row[k]) )
-  wr.writerow(out_row)
-csvOutFile.close()

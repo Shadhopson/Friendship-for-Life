@@ -10,10 +10,12 @@
   "partnerCardCsvMaxRow": 9,
 
   "defaultConn": "dbPath",
-  "dbPath": "test.db",
-
   "gameConn": "gameResultsDbPath",
+
+  "dbPath": "friendship.db",
   "gameResultsDbPath": "gameOut.db",
+
+  "gameDbToCsvPath": "gameDataOut.csv",
 
   "codeAliases": {
     "PhysicalExercise": "Exercise",
