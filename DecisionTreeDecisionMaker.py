@@ -136,6 +136,5 @@ class DecisionTreeDecisionMaker:
             best_index = prediction_i
           scores.append(score)
         choice = best_index
-        print choice
     return choice
 
