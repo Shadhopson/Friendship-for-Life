@@ -13,7 +13,10 @@ SELECT
   "AllHobby",
   "AllPartner",
   "AllFailedPartner",
-  "AllPassedPartner";
+  "AllPassedPartner",
+  "AllFailedJob",
+  "AllPassedJob"
+  ;
 
 SELECT
   GameState.Time,
@@ -28,7 +31,9 @@ SELECT
   ( P1.PartnerCode || CASE WHEN  P2.PartnerCode  IS NOT NULL THEN  P2.PartnerCode  ELSE "" END || CASE WHEN  P3.PartnerCode  IS NOT NULL THEN  P3.PartnerCode  ELSE "" END ) AS AllPartner,
 
   ( FP1.PartnerCode || CASE WHEN  FP2.PartnerCode  IS NOT NULL THEN  FP2.PartnerCode  ELSE "" END || CASE WHEN  FP3.PartnerCode  IS NOT NULL THEN  FP3.PartnerCode  ELSE "" END ) AS AllFailedPartner,
-  ( PP1.PartnerCode || CASE WHEN  PP2.PartnerCode  IS NOT NULL THEN  PP2.PartnerCode  ELSE "" END || CASE WHEN  PP3.PartnerCode  IS NOT NULL THEN  PP3.PartnerCode  ELSE "" END ) AS AllPassedPartner
+  ( PP1.PartnerCode || CASE WHEN  PP2.PartnerCode  IS NOT NULL THEN  PP2.PartnerCode  ELSE "" END || CASE WHEN  PP3.PartnerCode  IS NOT NULL THEN  PP3.PartnerCode  ELSE "" END ) AS AllPassedPartner,
+  ( FJ1.JobCode || CASE WHEN  FJ2.JobCode  IS NOT NULL THEN  FJ2.JobCode  ELSE "" END || CASE WHEN  FJ3.JobCode  IS NOT NULL THEN  FJ3.JobCode  ELSE "" END ) AS AllFailedJob,
+  ( PJ1.JobCode || CASE WHEN  PJ2.JobCode  IS NOT NULL THEN  PJ2.JobCode  ELSE "" END || CASE WHEN  PJ3.JobCode  IS NOT NULL THEN  PJ3.JobCode  ELSE "" END ) AS AllPassedJob
 FROM
   GameState
   INNER JOIN GameStateAction ON GameStateAction.GameStateId = GameState.GameStateId

@@ -3,14 +3,6 @@ import numpy as np
 import json
 import pickle
 
-X = [[0, 0], [1, 1]]
-
-Y = [0, 1]
-
-clf = tree.DecisionTreeClassifier()
-
-clf = clf.fit(X, Y)
-
 arr = [ "" ]
 def convert_cell(content):
   if content not in arr:
@@ -25,12 +17,15 @@ dataset = np.loadtxt('gameOut.csv', dtype='int', delimiter=",", skiprows=1,conve
     8: convert_cell, \
     9: convert_cell, \
     10: convert_cell, \
-    11: convert_cell } )
+    11: convert_cell, \
+    12: convert_cell, \
+    13: convert_cell } )
     
 
-input_data = dataset[:, [0,1,2,4,5,6,7,8,9,10,11] ]
+input_data = dataset[:, [0,1,2,4,5,6,7,8,9,10,11,12,13] ]
 output_data = dataset[:, 3]
 
+clf = tree.DecisionTreeClassifier()
 clf = clf.fit(input_data, output_data)
 
 s = pickle.dumps(clf)
