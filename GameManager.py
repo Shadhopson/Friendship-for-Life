@@ -67,6 +67,7 @@ class Player(object):
     self.playerSkillModifications = {}
     self.playerNeedModifications = {}
     self.money = money
+    self.bankruptcyCounter = 0
     self.trustTokens = trustTokens
     self.hasBankruptcy = False
     self.children = []
@@ -218,9 +219,8 @@ class Player(object):
       else:
         points -= 1
 
-    if self.hasBankruptcy:
-      points -= 1
-    
+    points -= self.bankruptcyCounter
+
     return points
 
   # gets players current stats (after modifications)
@@ -453,7 +453,7 @@ class Game(object):
   def performNextStep( self, action=None ):
 
     self.logPlayers()
-
+    current_money = self.currentPlayer().money
     #create log
     log = { "Round": self.currentRound, "Player": self.currentPlayer().playerCard.code, 'CurrentStep': self.currentStep }
     log['Type'] = 'Action'
@@ -652,9 +652,9 @@ class Game(object):
         self.currentPlayer().money += self.currentPlayer().partnerFinances(partner)
 
       if self.currentPlayer().money < 0:
-        self.currentPlayer().money = 0
+        self.currentPlayer().money = current_money 
         self.currentPlayer().hasBankruptcy = True
-
+        self.currentPlayer().bankruptcyCounter += 1
     self.gameLog.append(log)
 
     #move to next step
