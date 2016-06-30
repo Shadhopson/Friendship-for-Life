@@ -498,12 +498,12 @@ class DataManager(object):
     for row in gameLog:
       if row['Type'] == 'GameState':
         inputs = [ gameId, row['Points'], row['PlayerCode'], row['Time'], \
-            row['Round'], row['Step'], row['Money'], row['TrustTokens'], ]
+            row['Round'], row['Step'], row['Money'], row['TrustTokens'], row['EndPoints'] ]
         res = DataManager.execute( """
           INSERT INTO GameState 
-            ( GameId, Points, PlayerCode, Time, Round, Step, Money, TrustTokens )
+            ( GameId, Points, PlayerCode, Time, Round, Step, Money, TrustTokens, RoundEndPoints )
           VALUES
-            ( ?, ?, ?, ?, ?, ?, ?, ? )
+            ( ?, ?, ?, ?, ?, ?, ?, ?, ? )
           """, inputs, "gameConn" )
 
         gameStateId = res.lastrowid

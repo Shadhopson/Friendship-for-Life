@@ -37,6 +37,8 @@
   "eventRollStatMinus": [18], 
   "eventRollStatPlus": [19], 
 
+  "forceShareKnowledge": true,
+
   "gameLogOutCsvPath": "gameLog.csv"
 
 }

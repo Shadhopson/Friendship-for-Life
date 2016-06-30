@@ -4,6 +4,10 @@ import csv
 
 from DataManager import DataManager
 
+"""
+" Card Classes 
+"   used by simulator. Initializes card stats from the database
+"""
 class PlayerCard(object):
   def __init__(self, code ):
     self.code = code
@@ -60,6 +64,11 @@ class PartnerCard(object):
     self.skillRequirements = DataManager.getRows( "SELECT * FROM PartnerSkillRequirement WHERE PartnerCode=?", [code] )
     self.needs = DataManager.getRows( "SELECT * FROM PartnerNeed WHERE PartnerCode=?", [code] )
 
+"""
+" Player Class 
+"   keeps track of current state info of a player and provides methods for retreiving 
+"   info and changing player state 
+"""
 class Player(object):
 
   def __init__(self, playerCard, money, trustTokens ):
@@ -69,7 +78,6 @@ class Player(object):
     self.money = money
     self.bankruptcyCounter = 0
     self.trustTokens = trustTokens
-    self.hasBankruptcy = False
     self.children = []
     self.partners = []
     self.partnerSkillModifications = {}
@@ -81,20 +89,25 @@ class Player(object):
     self.jobSkillModifications = {}
     self.jobFiredCounts = {}
     self.jobPassedCounts = {}
+    self.skillKnowledge = {}
+    self.needKnowledge = []
 
     for skill in self.playerCard.skills:
       self.playerSkillModifications[skill['SkillCode']] = 0
 
+  # adds a + or - modifier to a player's need 
   def modifyNeed( self, needCode, value ):
     if needCode not in self.playerNeedModifications:
       self.playerNeedModifications[needCode] = 0
     self.playerNeedModifications[needCode] += value
 
+  # adds a + or - modifier to a player's need 
   def modifySkill( self, skillCode, value ):
     if skillCode not in self.playerSkillModifications:
       self.playerSkillModifications[skillCode] = 0
     self.playerSkillModifications[skillCode] += value
 
+  # adds a + or - modifier to a jobs's  required skill
   def modifyJobSkill( self, job, skillCode, value ):
     if job.code not in self.jobSkillModifications:
       self.jobSkillModifications[job.code] = {}
@@ -102,11 +115,13 @@ class Player(object):
       self.jobSkillModifications[job.code][skillCode] = 0
     self.jobSkillModifications[job.code][skillCode] += value
 
+  # adds a + or - modifier to a jobs's  payment
   def modifyJobPayment( self, job, value ):
     if job.code not in self.jobPayModifications:
       self.jobPayModifications[job.code] = 0
     self.jobPayModifications[job.code] += value
 
+  # adds a + or - modifier to a partners's  required skills
   def modifyPartnerSkill( self, partner, skillCode, value ):
     if partner.code not in self.partnerSkillModifications:
       self.partnerSkillModifications[partner.code] = {}
@@ -114,31 +129,37 @@ class Player(object):
       self.partnerSkillModifications[partner.code][skillCode] = 0
     self.partnerSkillModifications[partner.code][skillCode] += value
 
+  # records that a player was fired from a job
   def logJobFired( self, job ):
     if job.code not in self.jobFiredCounts:
       self.jobFiredCounts[job.code] = 0
     self.jobFiredCounts[job.code] += 1 
 
+  # records that a player passed a job check
   def logJobPassed( self, job ):
     if job.code not in self.jobPassedCounts:
       self.jobPassedCounts[job.code] = 0
     self.jobPassedCounts[job.code] += 1 
 
+  # records that a player was dumped by a partner
   def logPartnerFired( self, partner ):
     if partner.code not in self.partnerFiredCounts:
       self.partnerFiredCounts[partner.code] = 0
     self.partnerFiredCounts[partner.code] += 1 
 
+  # records that a player passed a relationship check
   def logPartnerPassed( self, partner ):
     if partner.code not in self.partnerPassedCounts:
       self.partnerPassedCounts[partner.code] = 0
     self.partnerPassedCounts[partner.code] += 1 
 
+  # removes partner from player and resets that partner's modifiers
   def dropPartner( self, partner ):
     self.partners.remove(partner)
     if partner.code in self.partnerSkillModifications:
       self.partnerSkillModifications[partner.code] = {}
 
+  # removes job from player and resets that job's modifiers
   def dropJob( self, job ):
     self.jobs.remove(job)
     if job.code in self.jobSkillModifications:
@@ -146,6 +167,7 @@ class Player(object):
     if job.code in self.jobPayModifications:
       self.jobPayModifications[job.code] = 0
 
+  # removes a hobby from player
   def dropHobby( self, hobby ):
     self.hobbies.remove(hobby)
 
@@ -307,18 +329,22 @@ class Player(object):
     time += GameManager.setting("hobbyTime") * len(self.hobbies)
     return time
 
+  # calculates how much a job pays you during night step
   def jobPayment(self,job):
     payment = job.pay
     if job.code in self.jobPayModifications:
       payment += self.jobPayModifications[job.code]
     return payment
 
+  # calculates how your children cost you during night step
   def childrenExpenses(self):
     return len(self.children) * GameManager.setting("childExpense")
 
+  # calculates how your hobbies cost you during night step
   def hobbyExpenses(self,hobby):
     return hobby.expense
 
+  # calculates how your partners cost/provide you during night step
   def partnerFinances(self, partner):
     return partner.finances
 
@@ -336,6 +362,7 @@ class Game(object):
     self.jobCardDeck = []
 
     self.players = []
+    self.roundStartPoints = []
 
     #Initialize and shuffle all decs
     playerCardRows = DataManager.getRows( "SELECT PlayerCode FROM Player" )
@@ -360,6 +387,7 @@ class Game(object):
 
     self.resetGame()
 
+  # returns game to start state and removes all players (must re-add players after you use this)
   def resetGame(self):
 
     for player in self.players:
@@ -387,8 +415,8 @@ class Game(object):
     self.gameLog = []
     self.players = []
 
-  #Adds a player to the game by taking card out of player card dec
-  #if playerCode is passed in, will search through deck instead of drawing the next card
+  # Adds a player to the game by taking card out of player card dec
+  # if playerCode is passed in, will search through deck instead of drawing the next card
   def addPlayer(self, playerCode=None, money=None):
     newPlayerCard = None
     if playerCode:
@@ -410,29 +438,35 @@ class Game(object):
     return self.currentPlayerIndex != None
 
   def currentPlayer(self):
-    if self.isNextStep():
+    if self.currentPlayerIndex != None:
       return self.players[self.currentPlayerIndex]
 
   # returns the available actions for the current player for the next step
   def nextStepAvailableActions( self ):
     ret = []
     if self.currentStep == 'morning':
-      for player in self.players:
-        if player != self.currentPlayer():
-          ret.append( { 'action': 'hangOut', 'target': player.playerCard.code } )
+      self.roundStartPoints = []
+      #for player in self.players:
+      #  if player != self.currentPlayer():
+      #    ret.append( { 'action': 'hangOut', 'target': player.playerCard.code } )
+      #    if self.currentPlayer().trustTokens > 0:
+      #      ret.append( { 'action': 'shareKnowledge', 'target': player.playerCard.code } )
+      ret.append( { 'action': 'hangOut' } )
+      ret.append( { 'action': 'shareKnowledge' } )
       ret.append( { 'action': 'pass' } )
 
     elif self.currentStep == 'evening':
-      if self.currentPlayer().currentTime() + GameManager.setting("jobTime") <= GameManager.setting("maxTime"):
+      currentTime = self.currentPlayer().currentTime()
+      if currentTime + GameManager.setting("jobTime") <= GameManager.setting("maxTime"):
         ret.append( { 'action': 'jobSearch' } )
-      if self.currentPlayer().currentTime() + GameManager.setting("hobbyTime") <= GameManager.setting("maxTime"):
+      if currentTime + GameManager.setting("hobbyTime") <= GameManager.setting("maxTime"):
         ret.append( { 'action': 'hobbySearch' } )
-      if self.currentPlayer().currentTime() + GameManager.setting("partnerTime") <= GameManager.setting("maxTime"):
+      if currentTime + GameManager.setting("partnerTime") <= GameManager.setting("maxTime"):
         ret.append( { 'action': 'partnerSearch' } )
 
       if GameManager.setting("isChildTimeFlat") and len(self.currentPlayer().children):
         ret.append( { 'action': 'childAttempt' } )
-      elif self.currentPlayer().currentTime() + GameManager.setting("childTime") <= GameManager.setting("maxTime"):
+      elif currentTime + GameManager.setting("childTime") <= GameManager.setting("maxTime"):
         ret.append( { 'action': 'childAttempt' } )
 
       ret.append( { 'action': 'pass' } )
@@ -452,9 +486,10 @@ class Game(object):
   # action= the index of the action returned from nextStepAvailableActions()
   def performNextStep( self, action=None ):
 
+    #log players
     self.logPlayers()
-    current_money = self.currentPlayer().money
-    #create log
+
+    #init action log
     log = { "Round": self.currentRound, "Player": self.currentPlayer().playerCard.code, 'CurrentStep': self.currentStep }
     log['Type'] = 'Action'
     if action != None:
@@ -465,8 +500,47 @@ class Game(object):
       raise ValueError( self.nextStepAvailableActions() )
 
     #perform action
-    if action['action'] == 'hangOut':
+    if action['action'] == 'hangOut' or \
+        (self.currentStep == 'morning' and GameManager.setting('forceShareKnowledge') and self.currentPlayer().trustTokens < 1):
       self.currentPlayer().trustTokens += 1
+
+    elif action['action'] == 'shareKnowledge' or \
+        (self.currentStep == 'morning' and GameManager.setting('forceShareKnowledge') ):
+
+      #figure out what skills and needs this player hasn't been told
+      self.currentPlayer().trustTokens -= 1
+      neededSkillInfo = [] 
+      neededNeedInfo = []
+      for skill in self.currentPlayer().playerCard.skills:
+        if skill['SkillCode'] not in self.currentPlayer().skillKnowledge.keys():
+          neededSkillInfo.append( skill['SkillCode'] )
+      for need in self.currentPlayer().playerCard.needs:
+        if need['NeedCode'] not in self.currentPlayer().needKnowledge:
+          neededNeedInfo.append( need['NeedCode'] )
+
+      # randomly select either skill or need (if both still are needed)
+      choices = []
+      if len(neededSkillInfo):
+        choices.append("skill")
+      if len(neededNeedInfo):
+        choices.append("need")
+      choice = choices[random.randint(0,len(choices)-1)]
+
+      # share skill info
+      if choice == 'skill':
+        skill = neededSkillInfo[random.randint(0,len(neededSkillInfo)-1)]
+        playerSkills = self.currentPlayer().skillStats()
+        if playerSkills[skill] > 3:
+          self.currentPlayer().skillKnowledge[skill] = 'high'
+        elif playerSkills[skill] > 1:
+          self.currentPlayer().skillKnowledge[skill] = 'medium'
+        else:
+          self.currentPlayer().skillKnowledge[skill] = 'low'
+      # share need info
+      elif choice == 'need':
+        need = neededNeedInfo[random.randint(0,len(neededNeedInfo)-1)]
+        self.currentPlayer().needKnowledge.append(need)
+
     elif action['action'] == 'jobSearch':
       actions = [{'action':'pass'}]
       revealedCards = []
@@ -539,7 +613,6 @@ class Game(object):
         if partner.code == action['partnerCard']:
           self.currentPlayer().dropPartner(partner)
           self.partnerCardDeck.insert(0,partner)
-
 
     # EVENT ROLL (if evening)
     if self.currentStep == 'evening':
@@ -631,7 +704,11 @@ class Game(object):
         log["eventRoll"] = "Nothing" 
 
 
+    # If night: Update players money based upon current jobs, children, partners, and hobbies 
+    #   Also, update games player log
     if self.currentStep == 'night':
+
+      nightStartMoney = self.currentPlayer().money
 
       # get paid
       for job in self.currentPlayer().jobs:
@@ -652,9 +729,21 @@ class Game(object):
         self.currentPlayer().money += self.currentPlayer().partnerFinances(partner)
 
       if self.currentPlayer().money < 0:
-        self.currentPlayer().money = current_money 
-        self.currentPlayer().hasBankruptcy = True
+        self.currentPlayer().money = nightStartMoney 
         self.currentPlayer().bankruptcyCounter += 1
+
+      # add on the 'round end points' to the game log 
+      for gLog in reversed(self.gameLog):
+        if gLog['Type'] == 'GameState':
+          if 'EndPoints' in gLog:
+            break
+          else:
+            for player in self.players:
+              if player.playerCard.code == gLog['PlayerCode']:
+                gLog['EndPoints'] = player.points()
+                break;
+
+    # record action
     self.gameLog.append(log)
 
     #move to next step
@@ -663,6 +752,7 @@ class Game(object):
     elif self.currentStep == 'evening':
       self.currentStep = 'night'
     elif self.currentStep == 'night':
+
       if self.currentPlayerIndex+1 < len(self.players):
         self.currentPlayerIndex += 1
       elif self.currentRound < self.totalRounds:
@@ -675,7 +765,7 @@ class Game(object):
 
       self.currentStep = 'morning'
 
-
+  # adds all players current state to the game log
   def logPlayers( self ):
     for player in self.players:
       log = {}
@@ -744,7 +834,15 @@ class Game(object):
       for jobCode in player.jobPassedCounts:
         log["JobPassedCounts"][jobCode] = player.jobPassedCounts[jobCode]
 
-      self.gameLog.append(log)
+      log["SkillKnowledge"] = {}
+      for skill in player.skillKnowledge:
+        log["SkillKnowledge"][skill] = player.skillKnowledge[skill]
+
+      log["NeedKnowledge"] = []
+      for need in player.needKnowledge:
+        log["NeedKnowledge"].append( need )
+
+      self.gameLog.append( log )
 
 class GameManager(object):
   settings = []
