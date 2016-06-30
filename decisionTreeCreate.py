@@ -19,10 +19,13 @@ dataset = np.loadtxt('gameOut.csv', dtype='int', delimiter=",", skiprows=1,conve
     10: convert_cell, \
     11: convert_cell, \
     12: convert_cell, \
-    13: convert_cell } )
+    13: convert_cell, \
+    14: convert_cell, \
+    15: convert_cell \
+    } )
     
 
-input_data = dataset[:, [0,1,2,4,5,6,7,8,9,10,11,12,13] ]
+input_data = dataset[:, [0,1,2,4,5,6,7,8,9,10,11,12,13,14,15] ]
 output_data = dataset[:, 3]
 
 clf = tree.DecisionTreeClassifier()

@@ -477,6 +477,8 @@ class DataManager(object):
       "GameStateJobPassedCount" ,\
       "GameStateAction" ,\
       "GameStatePartner" ,\
+      "GameStateSkillKnowledge" ,\
+      "GameStateNeedKnowledge" \
     ]
     for table in gameTables:
       DataManager.execute( "DELETE FROM %s"%table, None, "gameConn" )
@@ -645,6 +647,25 @@ class DataManager(object):
               ( ?, ?, ? )
             """, inputs, "gameConn" )
 
+        for i,skill in enumerate(sorted(row['SkillKnowledge'])):
+          val = row['SkillKnowledge'][skill]
+          inputs  = [ gameStateId, skill, val, i+1 ]
+          res = DataManager.execute( """
+            INSERT INTO GameStateSkillKnowledge
+              ( GameStateId, SkillCode, KnowledgeCode, Position )
+            VALUES
+              ( ?, ?, ?, ? )
+            """, inputs, "gameConn" )
+
+        for i,need in enumerate(sorted(row['NeedKnowledge'])):
+          inputs  = [ gameStateId, need, 'HasNeed', i+1 ]
+          res = DataManager.execute( """
+            INSERT INTO GameStateNeedKnowledge
+              ( GameStateId, NeedCode, KnowledgeCode, Position )
+            VALUES
+              ( ?, ?, ?, ? )
+            """, inputs, "gameConn" )
+
       elif row['Type'] == 'Action':
         if row['CurrentStep'] == 'evening':
 
@@ -691,5 +712,4 @@ class DataManager(object):
             """, inputs, "gameConn" )
 
     DataManager.execute( "UPDATE GameState SET FinalScore=? WHERE GameId=?", [lastRow['Points'],gameId], "gameConn" )
-    DataManager.closeConnection("gameConn")
 

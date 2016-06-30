@@ -2,6 +2,9 @@ import random
 import json
 import csv
 
+def d(target):
+  print json.dumps( target, sort_keys=True, indent=2 )
+
 from DataManager import DataManager
 
 """

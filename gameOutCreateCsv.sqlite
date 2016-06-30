@@ -15,7 +15,9 @@ SELECT
   "AllFailedPartner",
   "AllPassedPartner",
   "AllFailedJob",
-  "AllPassedJob"
+  "AllPassedJob",
+  "AllNeedKnowledge",
+  "AllSkillKnowledge"
   ;
 
 SELECT
@@ -25,15 +27,29 @@ SELECT
   GameState.RoundEndPoints - GameState.Points AS PointChange,
   GameStateAction.ActionType,
   GameStateAction.Decision,
-  ( C1.ChildCode || CASE WHEN  C2.ChildCode  IS NOT NULL THEN  C2.ChildCode  ELSE "" END || CASE WHEN  C3.ChildCode  IS NOT NULL THEN  C3.ChildCode  ELSE "" END ) AS AllChildren,
-  ( J1.JobCode || CASE WHEN  J2.JobCode  IS NOT NULL THEN  J2.JobCode  ELSE "" END || CASE WHEN  J3.JobCode  IS NOT NULL THEN  J3.JobCode  ELSE "" END ) AS AllJob,
-  ( H1.HobbyCode || CASE WHEN  H2.HobbyCode  IS NOT NULL THEN  H2.HobbyCode  ELSE "" END || CASE WHEN  H3.HobbyCode  IS NOT NULL THEN  H3.HobbyCode  ELSE "" END ) AS AllHobby,
-  ( P1.PartnerCode || CASE WHEN  P2.PartnerCode  IS NOT NULL THEN  P2.PartnerCode  ELSE "" END || CASE WHEN  P3.PartnerCode  IS NOT NULL THEN  P3.PartnerCode  ELSE "" END ) AS AllPartner,
+  ( C1.ChildCode || CASE WHEN  C2.ChildCode  IS NOT NULL THEN "_" || C2.ChildCode  ELSE "" END || CASE WHEN  C3.ChildCode  IS NOT NULL THEN "_" || C3.ChildCode  ELSE "" END ) AS AllChildren,
+  ( J1.JobCode || CASE WHEN  J2.JobCode  IS NOT NULL THEN "_" || J2.JobCode  ELSE "" END || CASE WHEN  J3.JobCode  IS NOT NULL THEN "_" || J3.JobCode  ELSE "" END ) AS AllJob,
+  ( H1.HobbyCode || CASE WHEN  H2.HobbyCode  IS NOT NULL THEN "_" || H2.HobbyCode  ELSE "" END || CASE WHEN  H3.HobbyCode  IS NOT NULL THEN "_" || H3.HobbyCode  ELSE "" END ) AS AllHobby,
+  ( P1.PartnerCode || CASE WHEN  P2.PartnerCode  IS NOT NULL THEN "_" || P2.PartnerCode  ELSE "" END || CASE WHEN  P3.PartnerCode  IS NOT NULL THEN "_" || P3.PartnerCode  ELSE "" END ) AS AllPartner,
 
   ( FP1.PartnerCode || CASE WHEN  FP2.PartnerCode  IS NOT NULL THEN  FP2.PartnerCode  ELSE "" END || CASE WHEN  FP3.PartnerCode  IS NOT NULL THEN  FP3.PartnerCode  ELSE "" END ) AS AllFailedPartner,
   ( PP1.PartnerCode || CASE WHEN  PP2.PartnerCode  IS NOT NULL THEN  PP2.PartnerCode  ELSE "" END || CASE WHEN  PP3.PartnerCode  IS NOT NULL THEN  PP3.PartnerCode  ELSE "" END ) AS AllPassedPartner,
   ( FJ1.JobCode || CASE WHEN  FJ2.JobCode  IS NOT NULL THEN  FJ2.JobCode  ELSE "" END || CASE WHEN  FJ3.JobCode  IS NOT NULL THEN  FJ3.JobCode  ELSE "" END ) AS AllFailedJob,
-  ( PJ1.JobCode || CASE WHEN  PJ2.JobCode  IS NOT NULL THEN  PJ2.JobCode  ELSE "" END || CASE WHEN  PJ3.JobCode  IS NOT NULL THEN  PJ3.JobCode  ELSE "" END ) AS AllPassedJob
+  ( PJ1.JobCode || CASE WHEN  PJ2.JobCode  IS NOT NULL THEN  PJ2.JobCode  ELSE "" END || CASE WHEN  PJ3.JobCode  IS NOT NULL THEN  PJ3.JobCode  ELSE "" END ) AS AllPassedJob,
+  ( 
+    N1.NeedCode  || N1.KnowledgeCode
+    || CASE WHEN  N2.NeedCode  IS NOT NULL THEN "_" || N2.NeedCode || N2.KnowledgeCode  ELSE "" END 
+    || CASE WHEN  N3.NeedCode  IS NOT NULL THEN "_" || N3.NeedCode || N3.KnowledgeCode  ELSE "" END 
+    || CASE WHEN  N4.NeedCode  IS NOT NULL THEN "_" || N4.NeedCode || N4.KnowledgeCode  ELSE "" END 
+    || CASE WHEN  N5.NeedCode  IS NOT NULL THEN "_" || N5.NeedCode || N5.KnowledgeCode  ELSE "" END 
+  ) AS AllNeedKnowledge,
+  ( 
+    S1.SkillCode  || S1.KnowledgeCode
+    || CASE WHEN  S2.SkillCode  IS NOT NULL THEN "_" || S2.SkillCode || S2.KnowledgeCode  ELSE "" END 
+    || CASE WHEN  S3.SkillCode  IS NOT NULL THEN "_" || S3.SkillCode || S3.KnowledgeCode  ELSE "" END 
+    || CASE WHEN  S4.SkillCode  IS NOT NULL THEN "_" || S4.SkillCode || S4.KnowledgeCode  ELSE "" END 
+    || CASE WHEN  S5.SkillCode  IS NOT NULL THEN "_" || S5.SkillCode || S5.KnowledgeCode  ELSE "" END 
+  ) AS AllSkillKnowledge
 FROM
   GameState
   INNER JOIN GameStateAction ON GameStateAction.GameStateId = GameState.GameStateId
@@ -61,4 +77,17 @@ FROM
   LEFT JOIN GameStatePartnerFiredCount AS PP3 ON PP3.GameStateId = GameState.GameStateId AND PP3.Position=3
   LEFT JOIN GameStatePartnerPassedCount AS FP1 ON FP1.GameStateId = GameState.GameStateId AND FP1.Position=1
   LEFT JOIN GameStatePartnerPassedCount AS FP2 ON FP2.GameStateId = GameState.GameStateId AND FP2.Position=2
-  LEFT JOIN GameStatePartnerPassedCount AS FP3 ON FP3.GameStateId = GameState.GameStateId AND FP3.Position=3;
+  LEFT JOIN GameStatePartnerPassedCount AS FP3 ON FP3.GameStateId = GameState.GameStateId AND FP3.Position=3
+
+  LEFT JOIN GameStateNeedKnowledge AS N1 ON N1.GameStateId = GameState.GameStateId AND N1.Position=1
+  LEFT JOIN GameStateNeedKnowledge AS N2 ON N2.GameStateId = GameState.GameStateId AND N2.Position=2
+  LEFT JOIN GameStateNeedKnowledge AS N3 ON N3.GameStateId = GameState.GameStateId AND N3.Position=3
+  LEFT JOIN GameStateNeedKnowledge AS N4 ON N4.GameStateId = GameState.GameStateId AND N4.Position=4
+  LEFT JOIN GameStateNeedKnowledge AS N5 ON N5.GameStateId = GameState.GameStateId AND N5.Position=5
+
+  LEFT JOIN GameStateSkillKnowledge AS S1 ON S1.GameStateId = GameState.GameStateId AND S1.Position=1
+  LEFT JOIN GameStateSkillKnowledge AS S2 ON S2.GameStateId = GameState.GameStateId AND S2.Position=2
+  LEFT JOIN GameStateSkillKnowledge AS S3 ON S3.GameStateId = GameState.GameStateId AND S3.Position=3
+  LEFT JOIN GameStateSkillKnowledge AS S4 ON S4.GameStateId = GameState.GameStateId AND S4.Position=4
+  LEFT JOIN GameStateSkillKnowledge AS S5 ON S5.GameStateId = GameState.GameStateId AND S5.Position=5
+  ;
