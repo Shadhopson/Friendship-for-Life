@@ -1,0 +1,1 @@
+input file: ..\random\random2000FinalScore.csv

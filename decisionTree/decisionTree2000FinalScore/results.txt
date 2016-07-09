@@ -1,0 +1,7 @@
+Avg Score: -1.42
+Player1 Avg Score: -1.46
+Player2 Avg Score: -1.58
+Player3 Avg Score: -1.29
+Player4 Avg Score: -1.53
+Player5 Avg Score: -1.32
+Player6 Avg Score: -1.33
