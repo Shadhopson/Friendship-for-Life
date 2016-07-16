@@ -6,12 +6,12 @@ import re
 
 def d(target):
   try:
-    print json.dumps( target, sort_keys=True, indent=2 )
-  except ValueError, e:
+    print json.dumps( target, sort_keys=False, indent=2 )
+  except:
     out = { 'out': target }
     try:
-      print json.dumps( out, sort_keys=True, indent=2 )
-    except ValueError, e2:
+      print json.dumps( out, sort_keys=False, indent=2 )
+    except:
       print target
 
 gameManagerPath = os.path.dirname(os.path.realpath(__file__))
@@ -28,6 +28,33 @@ class PlayerCard(object):
     self.skills = DataManager.getRows( "SELECT * FROM PlayerSkill WHERE PlayerCode=?", [code] )
     self.needs = DataManager.getRows( "SELECT * FROM PlayerNeed WHERE PlayerCode=?", [code] )
 
+  def __str__(self):
+    ret = self.code;
+    skill_arr = []
+    for skill in self.skills:
+      skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
+    if len(skill_arr):
+      ret = "%s - Skills:[%s]"%(ret, ", ".join(skill_arr ) )
+    need_arr = []
+    for need in self.needs:
+      need_arr.append( "%s:%d"%(need['NeedCode'],need['Value']) )
+    if len(need_arr):
+      ret = "%s - Needs:[%s]"%(ret, ", ".join(need_arr ) )
+
+    return ret
+
+  def jsonData(self):
+    playerData = {}
+    playerData['Code'] = self.code
+    playerData['Label'] = str(self)
+    playerData['Needs'] = {}
+    for need in self.needs:
+      playerData['Needs'][need['NeedCode']] = need['Value']
+    playerData['Skills'] = {}
+    for skill in self.skills:
+      playerData['Skills'][skill['SkillCode']] = skill['Value']
+    return playerData
+
 
 class HobbyCard(object):
   def __init__(self, code ):
@@ -37,6 +64,35 @@ class HobbyCard(object):
     self.expense = hobby_row['Expense']
     self.skills = DataManager.getRows( "SELECT * FROM HobbySkill WHERE HobbyCode=?", [code] )
     self.needs = DataManager.getRows( "SELECT * FROM HobbyNeed WHERE HobbyCode=?", [code] )
+
+  def __str__(self):
+    ret = self.code;
+    skill_arr = []
+    for skill in self.skills:
+      skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
+    if len(skill_arr):
+      ret = "%s - Skills:[%s]"%(ret, ", ".join(skill_arr ) )
+    need_arr = []
+    for need in self.needs:
+      need_arr.append( "%s:%d"%(need['NeedCode'],need['Value']) )
+    if len(need_arr):
+      ret = "%s - Needs:[%s]"%(ret, ", ".join(need_arr ) )
+    if self.expense:
+      ret = "%s - Expense:%s"%(ret,self.expense)
+
+    return ret
+
+  def jsonData(self):
+    hobbyData = {}
+    hobbyData['Code'] = self.code
+    hobbyData['Label'] = str(self)
+    hobbyData['Needs'] = {}
+    for need in self.needs:
+      hobbyData['Needs'][need['NeedCode']] = need['Value']
+    hobbyData['Skills'] = {}
+    for skill in self.skills:
+      hobbyData['Skills'][skill['SkillCode']] = skill['Value']
+    return hobbyData
 
 
 class ChildCard(object):
@@ -48,6 +104,35 @@ class ChildCard(object):
     self.skills = DataManager.getRows( "SELECT * FROM ChildSkill WHERE ChildCode=?", [code] )
     self.needs = DataManager.getRows( "SELECT * FROM ChildNeed WHERE ChildCode=?", [code] )
 
+  def __str__(self):
+    ret = self.code;
+    skill_arr = []
+    for skill in self.skills:
+      skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
+    if len(skill_arr):
+      ret = "%s - Skills:[%s]"%(ret, ", ".join(skill_arr ) )
+    need_arr = []
+    for need in self.needs:
+      need_arr.append( "%s:%d"%(need['NeedCode'],need['Value']) )
+    if len(need_arr):
+      ret = "%s - Needs:[%s]"%(ret, ", ".join(need_arr ) )
+    if self.cost:
+      ret = "%s - Expense:%s"%(ret,self.cost)
+
+    return ret
+
+  def jsonData(self):
+    childData = {}
+    childData['Code'] = self.code
+    childData['Label'] = str(self)
+    childData['Needs'] = {}
+    for need in self.needs:
+      childData['Needs'][need['NeedCode']] = need['Value']
+    childData['Skills'] = {}
+    for skill in self.skills:
+      childData['Skills'][skill['SkillCode']] = skill['Value']
+    childData['Cost'] = self.cost
+    return childData
 
 class JobCard(object):
   def __init__(self, code ):
@@ -68,6 +153,37 @@ class JobCard(object):
       else:
         self.pay = 1
 
+  def __str__(self):
+    ret = self.code;
+    skill_arr = []
+    for skill in self.skillRequirements:
+      skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
+    if len(skill_arr):
+      ret = "%s - Skill Req:[%s]"%(ret, ", ".join(skill_arr ) )
+    need_arr = []
+    for need in self.needs:
+      need_arr.append( "%s:%d"%(need['NeedCode'],need['Value']) )
+    if len(need_arr):
+      ret = "%s - Needs:[%s]"%(ret, ", ".join(need_arr ) )
+    if self.pay:
+      ret = "%s - Pay:%s"%(ret,self.pay)
+
+    return ret
+
+  def jsonData(self):
+    jobData = {}
+    jobData['Code'] = self.code
+    jobData['Label'] = str(self)
+    jobData['Needs'] = {}
+    for need in self.needs:
+      jobData['Needs'][need['NeedCode']] = need['Value']
+    jobData['SkillRequirements'] = {}
+    for skill in self.skillRequirements:
+      jobData['SkillRequirements'][skill['SkillCode']] = skill['Value']
+
+    jobData['Pay'] = self.pay
+    return jobData
+
 class PartnerCard(object):
   def __init__(self, code ):
     partner_row = DataManager.getRow( "SELECT * FROM Partner WHERE PartnerCode=?", [code] )
@@ -77,6 +193,39 @@ class PartnerCard(object):
     self.moneyRequirement = partner_row['MoneyRequirement']
     self.skillRequirements = DataManager.getRows( "SELECT * FROM PartnerSkillRequirement WHERE PartnerCode=?", [code] )
     self.needs = DataManager.getRows( "SELECT * FROM PartnerNeed WHERE PartnerCode=?", [code] )
+
+  def jsonData(self):
+    partnerData = {}
+    partnerData['Code'] = self.code
+    partnerData['Label'] = str(self)
+    partnerData['Needs'] = {}
+    for need in self.needs:
+      partnerData['Needs'][need['NeedCode']] = need['Value']
+    partnerData['SkillRequirements'] = {}
+    for skill in self.skillRequirements:
+      partnerData['SkillRequirements'][skill['SkillCode']] = skill['Value']
+    partnerData['MoneyRequirement'] = self.moneyRequirement
+    partnerData['Finances'] = self.finances
+    return partnerData
+
+  def __str__(self):
+    ret = self.code;
+    skill_arr = []
+    for skill in self.skillRequirements:
+      skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
+    if len(skill_arr):
+      ret = "%s - Skill Req:[%s]"%(ret, ", ".join(skill_arr ) )
+    if self.moneyRequirement:
+      ret = "%s - Money Req:%s"%(ret,self.finances)
+    need_arr = []
+    for need in self.needs:
+      need_arr.append( "%s:%d"%(need['NeedCode'],need['Value']) )
+    if len(need_arr):
+      ret = "%s - Needs:[%s]"%(ret, ", ".join(need_arr ) )
+    if self.finances:
+      ret = "%s - Finances:%s"%(ret,self.finances)
+
+    return ret
 
 """
 " Player Class 
@@ -334,9 +483,12 @@ class Player(object):
 
   # returns current level of time committed to cards
   def currentTime(self):
-    time = GameManager.setting("childTime")
-    if GameManager.setting("isChildTimeFlat") == False:
-      time = time * len(self.children)
+    time = 0
+    if len(self.children):
+      if GameManager.setting("isChildTimeFlat") == False:
+        time = time * len(self.children)
+      else:
+        time = GameManager.setting("childTime")
     time += GameManager.setting("partnerTime") * len(self.partners)
     time += GameManager.setting("jobTime") * len(self.jobs)
     time += GameManager.setting("hobbyTime") * len(self.hobbies)
@@ -361,6 +513,43 @@ class Player(object):
   def partnerFinances(self, partner):
     return partner.finances
 
+  def jsonData(self):
+    playerData = {}
+    playerData['Code'] = self.playerCard.code
+
+    playerData['TrustTokens'] = self.trustTokens
+    playerData['Money'] = self.money
+    playerData['CurrentTime'] = self.currentTime()
+
+    playerData['Hobbies'] = []
+    for hobby in self.hobbies:
+      playerData['Hobbies'].append(hobby.jsonData())
+    playerData['Partners'] = []
+    for partner in self.partners:
+      playerData['Partners'].append(partner.jsonData())
+    playerData['Jobs'] = []
+    for job in self.jobs:
+      playerData['Jobs'].append(job.jsonData())
+    playerData['Children'] = []
+    for child in self.children:
+      playerData['Children'].append(child.jsonData())
+
+    playerData['PlayerCard'] = self.playerCard.jsonData()
+    playerData['Points'] = self.points()
+    playerData['PlayerSkillModifications'] = self.playerSkillModifications
+    playerData['PlayerNeedModifications'] = self.playerNeedModifications
+    playerData['BankruptcyCounter'] = self.bankruptcyCounter
+    playerData['PartnerSkillModifications'] = self.partnerSkillModifications
+    playerData['PartnerFiredCounts'] = self.partnerFiredCounts
+    playerData['PartnerPassedCounts'] = self.partnerPassedCounts
+    playerData['JobPayModifications'] = self.jobPayModifications
+    playerData['JobSkillModifications'] = self.jobSkillModifications
+    playerData['JobFiredCounts'] = self.jobFiredCounts
+    playerData['JobPassedCounts'] = self.jobPassedCounts
+    playerData['SkillKnowledge'] = self.skillKnowledge
+    playerData['NeedKnowledge'] = self.needKnowledge
+
+    return playerData
 
 class Game(object):
 
@@ -374,8 +563,11 @@ class Game(object):
     self.childCardDeck = []
     self.jobCardDeck = []
 
+    self.revealedHobbyCards = []
+    self.revealedPartnerCards = []
+    self.revealedJobCards = []
+
     self.players = []
-    self.roundStartPoints = []
 
     #Initialize and shuffle all decs
     playerCardRows = DataManager.getRows( "SELECT PlayerCode FROM Player" )
@@ -427,6 +619,9 @@ class Game(object):
     self.currentStep = 'morning'
     self.gameLog = []
     self.players = []
+    self.revealedHobbyCards = []
+    self.revealedPartnerCards = []
+    self.revealedJobCards = []
 
   # Adds a player to the game by taking card out of player card dec
   # if playerCode is passed in, will search through deck instead of drawing the next card
@@ -458,40 +653,54 @@ class Game(object):
   def nextStepAvailableActions( self ):
     ret = []
     if self.currentStep == 'morning':
-      self.roundStartPoints = []
       #for player in self.players:
-      #  if player != self.currentPlayer():
+      #  if player != self.currentPlayer() and self.currentPlayer().trustTokens > 0:
       #    ret.append( { 'action': 'hangOut', 'target': player.playerCard.code } )
-      #    if self.currentPlayer().trustTokens > 0:
-      #      ret.append( { 'action': 'shareKnowledge', 'target': player.playerCard.code } )
-      ret.append( { 'action': 'hangOut' } )
-      ret.append( { 'action': 'shareKnowledge' } )
-      ret.append( { 'action': 'pass' } )
+      ret.append( { 'step': 'morning', 'action': 'hangOut' } )
+      if self.currentPlayer().trustTokens > 0:
+        ret.append( { 'step': 'morning', 'action': 'shareKnowledge', 'knowledgeType': 'skill' } )
+        ret.append( { 'step': 'morning', 'action': 'shareKnowledge', 'knowledgeType': 'need' } )
+      ret.append( { 'step': 'morning', 'action': 'pass' } )
 
     elif self.currentStep == 'evening':
       currentTime = self.currentPlayer().currentTime()
       if currentTime + GameManager.setting("jobTime") <= GameManager.setting("maxTime"):
-        ret.append( { 'action': 'jobSearch' } )
+        ret.append( { 'step': 'evening', 'action': 'jobSearch' } )
       if currentTime + GameManager.setting("hobbyTime") <= GameManager.setting("maxTime"):
-        ret.append( { 'action': 'hobbySearch' } )
+        ret.append( { 'step': 'evening', 'action': 'hobbySearch' } )
       if currentTime + GameManager.setting("partnerTime") <= GameManager.setting("maxTime"):
-        ret.append( { 'action': 'partnerSearch' } )
+        ret.append( { 'step': 'evening', 'action': 'partnerSearch' } )
 
       if GameManager.setting("isChildTimeFlat") and len(self.currentPlayer().children):
-        ret.append( { 'action': 'childAttempt' } )
+        ret.append( { 'step': 'evening', 'action': 'childAttempt' } )
       elif currentTime + GameManager.setting("childTime") <= GameManager.setting("maxTime"):
-        ret.append( { 'action': 'childAttempt' } )
+        ret.append( { 'step': 'evening', 'action': 'childAttempt' } )
 
-      ret.append( { 'action': 'pass' } )
+      ret.append( { 'step': 'evening', 'action': 'pass' } )
 
     elif self.currentStep == 'night':
-      ret.append( { 'action': 'pass' } )
+      ret.append( { 'step': 'night', 'action': 'pass' } )
       for job in self.currentPlayer().jobs:
-        ret.append( {'action': 'quitJob', 'jobCard': job.code } )
+        ret.append( {'step': 'night', 'action': 'quitJob', 'jobCard': job.code } )
       for hobby in self.currentPlayer().hobbies:
-        ret.append( {'action': 'quitHobby', 'hobbyCard': hobby.code } )
+        ret.append( {'step': 'night', 'action': 'quitHobby', 'hobbyCard': hobby.code } )
       for partner in self.currentPlayer().partners:
-        ret.append( {'action': 'quitPartner', 'partnerCard': partner.code } )
+        ret.append( {'step': 'night', 'action': 'quitPartner', 'partnerCard': partner.code } )
+
+    elif self.currentStep == 'jobSearch':
+      for i in self.revealedJobCards:
+        ret.append( {'step': 'jobSearch', 'action':i.code} )
+      ret.append( {'step': 'jobSearch', 'action': 'pass' } )
+
+    elif self.currentStep == 'partnerSearch':
+      for i in self.revealedPartnerCards:
+        ret.append( {'step': 'partnerSearch', 'action':i.code} )
+      ret.append( {'step': 'partnerSearch', 'action': 'pass' } )
+
+    elif self.currentStep == 'hobbySearch':
+      for i in self.revealedHobbyCards:
+        ret.append( {'step': 'hobbySearch', 'action':i.code} )
+      ret.append( {'step': 'hobbySearch', 'action': 'pass' } )
 
     return ret
 
@@ -512,6 +721,18 @@ class Game(object):
     else:
       raise ValueError( self.nextStepAvailableActions() )
 
+    nextStep = None
+    if self.currentStep == 'morning':
+      nextStep = 'evening'
+    elif self.currentStep == 'evening':
+      nextStep = 'night'
+    elif self.currentStep == 'jobSearch':
+      nextStep = 'night'
+    elif self.currentStep == 'partnerSearch':
+      nextStep = 'night'
+    elif self.currentStep == 'hobbySearch':
+      nextStep = 'night'
+
     #perform action
     if action['action'] == 'hangOut' or \
         (self.currentStep == 'morning' and GameManager.setting('forceShareKnowledge') and self.currentPlayer().trustTokens < 1):
@@ -525,10 +746,10 @@ class Game(object):
       neededSkillInfo = [] 
       neededNeedInfo = []
       for skill in self.currentPlayer().playerCard.skills:
-        if skill['SkillCode'] not in self.currentPlayer().skillKnowledge.keys():
+        if action['knowledgeType'] == 'skill' and skill['SkillCode'] not in self.currentPlayer().skillKnowledge.keys():
           neededSkillInfo.append( skill['SkillCode'] )
       for need in self.currentPlayer().playerCard.needs:
-        if need['NeedCode'] not in self.currentPlayer().needKnowledge:
+        if action['knowledgeType'] == 'need' and need['NeedCode'] not in self.currentPlayer().needKnowledge:
           neededNeedInfo.append( need['NeedCode'] )
 
       # randomly select either skill or need (if both still are needed)
@@ -542,6 +763,7 @@ class Game(object):
       # share skill info
       if choice == 'skill':
         skill = neededSkillInfo[random.randint(0,len(neededSkillInfo)-1)]
+
         playerSkills = self.currentPlayer().skillStats()
         if playerSkills[skill] > 3:
           self.currentPlayer().skillKnowledge[skill] = 'high'
@@ -549,59 +771,55 @@ class Game(object):
           self.currentPlayer().skillKnowledge[skill] = 'medium'
         else:
           self.currentPlayer().skillKnowledge[skill] = 'low'
+
       # share need info
       elif choice == 'need':
         need = neededNeedInfo[random.randint(0,len(neededNeedInfo)-1)]
         self.currentPlayer().needKnowledge.append(need)
 
     elif action['action'] == 'jobSearch':
-      actions = [{'action':'pass'}]
-      revealedCards = []
       for i in range(GameManager.setting("jobSearchNumCards")):
         nextJobCard = self.jobCardDeck.pop()
-        actions.append( {'action':'addJob','jobCard':nextJobCard.code} )
-        revealedCards.append(nextJobCard)
-      decision = self.decisionMaker.makeDecision( self, actions )
-      actionResponse = actions[decision]
-      log["Decision2"] = actionResponse
-      for i in revealedCards:
-        if actionResponse['action'] == 'addJob' and i.code == actionResponse['jobCard']:
+        self.revealedJobCards.append(nextJobCard)
+      nextStep = 'jobSearch'
+
+    elif action['step'] == 'jobSearch':
+      for i in self.revealedJobCards:
+        if action['action'] <> 'pass' and i.code == action['action']:
           self.currentPlayer().jobs.append( i )
           i.onAdd()
         else:
           self.jobCardDeck.insert( 0,i )
-
-    elif action['action'] == 'hobbySearch':
-      actions = [{'action':'pass'}]
-      revealedCards = []
-      for i in range(GameManager.setting("hobbySearchNumCards")):
-        nextHobbyCard = self.hobbyCardDeck.pop()
-        actions.append( {'action':'addHobby','hobbyCard':nextHobbyCard.code} )
-        revealedCards.append(nextHobbyCard)
-      decision = self.decisionMaker.makeDecision( self, actions )
-      actionResponse = actions[decision]
-      log["Decision2"] = actionResponse
-      for i in revealedCards:
-        if actionResponse['action'] == 'addHobby' and i.code == actionResponse['hobbyCard']:
-          self.currentPlayer().hobbies.append( i )
-        else:
-          self.hobbyCardDeck.insert( 0,i )
+      self.revealedJobCards = []
 
     elif action['action'] == 'partnerSearch':
-      actions = [{'action':'pass'}]
-      revealedCards = []
       for i in range(GameManager.setting("partnerSearchNumCards")):
         nextPartnerCard = self.partnerCardDeck.pop()
-        revealedCards.append( nextPartnerCard )
-        actions.append( {'action':'addPartner','partnerCard':nextPartnerCard.code} )
-      decision = self.decisionMaker.makeDecision( self, actions )
-      actionResponse = actions[decision]
-      log["Decision2"] = actionResponse
-      for i in revealedCards:
-        if actionResponse['action'] == 'addPartner' and actionResponse['partnerCard'] == i.code:
+        self.revealedPartnerCards.append(nextPartnerCard)
+      nextStep = 'partnerSearch'
+
+    elif action['step'] == 'partnerSearch':
+      for i in self.revealedPartnerCards:
+        if action['action'] <> 'pass' and i.code == action['action']:
           self.currentPlayer().partners.append( i )
         else:
           self.partnerCardDeck.insert( 0,i )
+      self.revealedPartnerCards = []
+
+
+    elif action['action'] == 'hobbySearch':
+      for i in range(GameManager.setting("hobbySearchNumCards")):
+        nextHobbyCard = self.hobbyCardDeck.pop()
+        self.revealedHobbyCards.append(nextHobbyCard)
+      nextStep = 'hobbySearch'
+
+    elif action['step'] == 'hobbySearch':
+      for i in self.revealedHobbyCards:
+        if action['action'] <> 'pass' and i.code == action['action']:
+          self.currentPlayer().hobbies.append( i )
+        else:
+          self.hobbyCardDeck.insert( 0,i )
+      self.revealedHobbyCards = []
 
     elif action['action'] == 'childAttempt':
       roll = random.randint(1,GameManager.setting("childAttemptDiceSides"))
@@ -735,7 +953,7 @@ class Game(object):
 
       # pay for hobbies 
       for hobby in self.currentPlayer().hobbies:
-        self.currentPlayer().money += self.currentPlayer().hobbyExpenses(hobby)
+        self.currentPlayer().money -= self.currentPlayer().hobbyExpenses(hobby)
 
       # partner finances
       for partner in self.currentPlayer().partners:
@@ -760,11 +978,10 @@ class Game(object):
     self.gameLog.append(log)
 
     #move to next step
-    if self.currentStep == 'morning':
-      self.currentStep = 'evening'
-    elif self.currentStep == 'evening':
-      self.currentStep = 'night'
-    elif self.currentStep == 'night':
+    if self.currentStep != 'night':
+      self.currentStep = nextStep
+
+    else:
 
       if self.currentPlayerIndex+1 < len(self.players):
         self.currentPlayerIndex += 1
@@ -856,6 +1073,32 @@ class Game(object):
         log["NeedKnowledge"].append( need )
 
       self.gameLog.append( log )
+
+  def jsonData(self):
+    outData = {}
+    outData['Players'] = []
+    for player in self.players:
+      outData['Players'].append(player.jsonData())
+
+    outData['Round'] = self.currentRound
+    outData['TotalRounds'] = GameManager.setting("totalRounds")
+    outData['CurrentStep'] = self.currentStep
+    outData['RevealedHobbyCards'] = []
+    for card in self.revealedHobbyCards:
+      outData['RevealedHobbyCards'].append( card.jsonData() )
+    outData['RevealedJobCards'] = []
+    for card in self.revealedJobCards:
+      outData['RevealedJobCards'].append( card.jsonData() )
+    outData['RevealedPartnerCards'] = []
+    for card in self.revealedPartnerCards:
+      outData['RevealedPartnerCards'].append( card.jsonData() )
+
+    if self.isNextStep():
+      outData['Actions'] = self.nextStepAvailableActions()
+    else:
+      outData['Actions'] = None
+
+    return outData
 
 class GameManager(object):
   settings = []

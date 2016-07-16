@@ -4,10 +4,10 @@
 
   "startingMoney": 3,
   "startingTrustTokens": 3,
-  "totalRounds": 8,
+  "totalRounds": 1,
 
   "jobSearchNumCards": 2,
-  "hobbySearchNumCards": 1,
+  "hobbySearchNumCards": 2,
   "partnerSearchNumCards": 2,
 
   "childExpense": 1,

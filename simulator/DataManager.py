@@ -23,6 +23,17 @@ def get_row(q):
   for row in q:
     return row
 
+def d(target):
+  try:
+    print json.dumps( target, sort_keys=False, indent=2 )
+  except:
+    out = { 'out': target }
+    try:
+      print json.dumps( out, sort_keys=False, indent=2 )
+    except:
+      print target
+
+
 class DataManager(object):
 
   conn = {}
@@ -38,9 +49,11 @@ class DataManager(object):
       conn = 'defaultConn'
     if conn not in DataManager.conn or DataManager.conn[conn] == None:
       dbPathVar = DataManager.setting(conn)
-      dbPath = DataManager.setting("gameResultsDbPath")
+      dbPath = DataManager.setting(dbPathVar)
       if os.path.isfile( dbPath ) == False and os.path.isfile( "%s/%s"%(dataManagerPath,dbPath) ) == True:
         dbPath = "%s/%s"%(dataManagerPath,dbPath)
+
+      DataManager.createGameDb()
 
       DataManager.conn[conn] = sqlite3.connect( dbPath )
       DataManager.conn[conn].row_factory = dict_factory 
@@ -713,22 +726,15 @@ class DataManager(object):
               ( ?, ?, ? )
             """, inputs, "gameConn" )
 
-          if 'Decision2' in row:
-            decision = row['Decision2']['action']
-            if decision == 'addHobby':
-              decision = row['Decision2']['hobbyCard'] 
-            elif decision == 'addJob':
-              decision = row['Decision2']['jobCard'] 
-            elif decision == 'addPartner':
-              decision = row['Decision2']['partnerCard'] 
+        elif row['CurrentStep'] == 'jobSearch' or row['CurrentStep'] == 'partnerSearch' or row['CurrentStep'] == 'hobbySearch':
 
-            inputs  = [ gameStateId, row['Decision']['action'], decision ]
-            res = DataManager.execute( """
-              INSERT INTO GameStateAction
-                ( GameStateId, ActionType, Decision )
-              VALUES
-                ( ?, ?, ? )
-              """, inputs, "gameConn" )
+          inputs  = [ gameStateId, row['CurrentStep'], row['Decision']['action'] ]
+          res = DataManager.execute( """
+            INSERT INTO GameStateAction
+              ( GameStateId, ActionType, Decision )
+            VALUES
+              ( ?, ?, ? )
+            """, inputs, "gameConn" )
 
         elif row['CurrentStep'] == 'night':
 
