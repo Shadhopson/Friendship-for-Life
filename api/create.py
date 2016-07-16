@@ -13,3 +13,4 @@ gameCode = sys.argv[1]
 
 api = Api(gameCode)
 api.createGame()
+print json.dumps(api.getGame())

@@ -10,4 +10,4 @@ if len(sys.argv) != 2:
 gameCode = sys.argv[1]
 
 api = Api.loadGame(gameCode)
-api.getGame()
+print json.dumps(api.getGame())

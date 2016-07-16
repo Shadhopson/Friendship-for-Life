@@ -12,3 +12,4 @@ decision = sys.argv[2]
 
 api = Api.loadGame(gameCode)
 api.performAction(decision)
+print json.dumps(api.getGame())

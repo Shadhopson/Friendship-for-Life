@@ -16,7 +16,11 @@ class Api(object):
     self.code = pCode
 
   #API METHODS
-  def createGame( self, pPlayerCodes=['Player1'] ):
+  def createGame( self, pPlayerCodes=None ):
+
+    saveHomeDir = "%s/saveFiles"%(apiPath)
+    if os.path.isdir( saveHomeDir ) == False:
+      os.mkdir( saveDir )
 
     saveDir = "%s/saveFiles/%s"%(apiPath,self.code)
     if os.path.isdir( saveDir ) == False:
@@ -27,7 +31,10 @@ class Api(object):
     DataManager.createGameDb()
 
     self.game = Game()
+    self.game.resetGame()
     playerCodes = pPlayerCodes
+    if playerCodes == None:
+      playerCodes = [self.game.playerCardDeck[0].code]
 
     for code in playerCodes:
       self.game.addPlayer( code )
@@ -46,7 +53,6 @@ class Api(object):
       exit()
     self.game.performNextStep( action )
     self.saveGame()
-    self.getGame()
 
   #INTERNAL METHODS
   def saveGame(self):
