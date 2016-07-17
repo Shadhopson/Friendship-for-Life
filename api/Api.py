@@ -54,6 +54,10 @@ class Api(object):
     self.game.performNextStep( action )
     self.saveGame()
 
+    if self.game.isNextStep() == False:
+      DataManager.insertGameLogIntoDb(self.game.gameLog)
+      DataManager.closeConnection("gameConn")
+
   #INTERNAL METHODS
   def saveGame(self):
 
@@ -72,7 +76,12 @@ class Api(object):
   @staticmethod
   def loadGame(pCode):
     saveDir = "%s/saveFiles/%s"%(apiPath,pCode)
-    saveFile = open( "%s/gameSave.pkl"%saveDir, 'r' )
+    saveFilePath = "%s/gameSave.pkl"%saveDir
+    if os.path.isfile( saveFilePath ) == False:
+      api = Api(pCode) 
+      api.createGame()
+
+    saveFile = open( saveFilePath, 'r' )
 
     data = pickle.loads(saveFile.read())
     DataManager.settings = data['DataManagerSettings']

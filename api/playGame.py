@@ -22,83 +22,80 @@ while api.game.isNextStep():
   printData['CurrentStep'] = outData['CurrentStep']
 
   for player in outData['Players']:
-    playerData = OrderedDict()
-    playerData['Time'] = player['CurrentTime']
-    playerData['Money'] = player['Money']
-    playerData['TrustTokens'] = player['TrustTokens']
+    printData['Time'] = player['CurrentTime']
+    printData['Money'] = player['Money']
+    printData['TrustTokens'] = player['TrustTokens']
     if player['BankruptcyCounter']:
-      playerData['BankruptcyCounter'] = player['BankruptcyCounter']
+      printData['BankruptcyCounter'] = player['BankruptcyCounter']
 
     if len(player['Jobs']):
-      playerData['Jobs'] = []
+      printData['Jobs'] = []
       for job in player['Jobs']:
-        playerData['Jobs'].append( job['Label'] )
+        printData['Jobs'].append( job['Label'] )
     if len(player['Hobbies']):
-      playerData['Hobbies'] = []
+      printData['Hobbies'] = []
       for hobby in player['Hobbies']:
-        playerData['Hobbies'].append( hobby['Label'] )
+        printData['Hobbies'].append( hobby['Label'] )
     if len(player['Partners']):
-      playerData['Partners'] = []
+      printData['Partners'] = []
       for partner in player['Partners']:
-        playerData['Partners'].append( partner['Label'] )
+        printData['Partners'].append( partner['Label'] )
     if len(player['Children']):
-      playerData['Children'] = []
+      printData['Children'] = []
       for partner in player['Children']:
-        playerData['Children'].append( partner['Label'] )
+        printData['Children'].append( partner['Label'] )
 
     if len(player['SkillKnowledge']):
-      playerData['SkillKnowledge'] = []
+      printData['SkillKnowledge'] = []
       for knowledge in player['SkillKnowledge']:
-        playerData['SkillKnowledge'].append( "%s: %s"%(knowledge,player['SkillKnowledge'][knowledge]) )
+        printData['SkillKnowledge'].append( "%s: %s"%(knowledge,player['SkillKnowledge'][knowledge]) )
 
     if len(player['NeedKnowledge']):
-      playerData['NeedKnowledge'] = player['NeedKnowledge']
+      printData['NeedKnowledge'] = player['NeedKnowledge']
 
     if len(player['JobSkillModifications']):
-      playerData['JobSkillModifications'] = []
+      printData['JobSkillModifications'] = []
       for jCode in player['JobSkillModifications']:
         for sCode in player['JobSkillModifications'][jCode]:
-          playerData['JobSkillModifications'].append( "%s: %s - %s"%(jCode,sCode,player['JobSkillModifications'][jCode][sCode]) )
+          printData['JobSkillModifications'].append( "%s: %s - %s"%(jCode,sCode,player['JobSkillModifications'][jCode][sCode]) )
 
     if len(player['PartnerSkillModifications']):
-      playerData['PartnerSkillModifications'] = []
+      printData['PartnerSkillModifications'] = []
       for pCode in player['PartnerSkillModifications']:
         for sCode in player['PartnerSkillModifications'][pCode]:
-          playerData['PartnerSkillModifications'].append( "%s: %s - %s"%(pCode,sCode,player['PartnerSkillModifications'][pCode][sCode]) )
+          printData['PartnerSkillModifications'].append( "%s: %s - %s"%(pCode,sCode,player['PartnerSkillModifications'][pCode][sCode]) )
 
     if len(player['JobFiredCounts']):
-      playerData['JobFiredCounts'] = []
+      printData['JobFiredCounts'] = []
       for code in player['JobFiredCounts']:
-        playerData['JobFiredCounts'].append( "%s: %s"%(code,player['JobFiredCounts'][code]) )
+        printData['JobFiredCounts'].append( "%s: %s"%(code,player['JobFiredCounts'][code]) )
 
     if len(player['JobPassedCounts']):
-      playerData['JobPassedCounts'] = []
+      printData['JobPassedCounts'] = []
       for code in player['JobPassedCounts']:
-        playerData['JobPassedCounts'].append( "%s: %s"%(code,player['JobPassedCounts'][code]) )
+        printData['JobPassedCounts'].append( "%s: %s"%(code,player['JobPassedCounts'][code]) )
 
     if len(player['PartnerFiredCounts']):
-      playerData['PartnerFiredCounts'] = []
+      printData['PartnerFiredCounts'] = []
       for code in player['PartnerFiredCounts']:
-        playerData['PartnerFiredCounts'].append( "%s: %s"%(code,player['PartnerFiredCounts'][code]) )
+        printData['PartnerFiredCounts'].append( "%s: %s"%(code,player['PartnerFiredCounts'][code]) )
 
     if len(player['PartnerPassedCounts']):
-      playerData['PartnerPassedCounts'] = []
+      printData['PartnerPassedCounts'] = []
       for code in player['PartnerPassedCounts']:
-        playerData['PartnerPassedCounts'].append( "%s: %s"%(code,player['PartnerPassedCounts'][code]) )
+        printData['PartnerPassedCounts'].append( "%s: %s"%(code,player['PartnerPassedCounts'][code]) )
 
     if len(player['PlayerNeedModifications']):
-      playerData['PlayerNeedModifications'] = []
+      printData['PlayerNeedModifications'] = []
       for code in player['PlayerNeedModifications']:
-        playerData['PlayerNeedModifications'].append( "%s: %s"%(code,player['PlayerNeedModifications'][code]) )
+        printData['PlayerNeedModifications'].append( "%s: %s"%(code,player['PlayerNeedModifications'][code]) )
 
     for code in player['PlayerSkillModifications']:
       skillMods = []
       if int(player['PlayerSkillModifications'][code]) > 0:
         skillMods.append( "%s: %s"%(code,player['PlayerSkillModifications'][code]) )
     if len(skillMods):
-      playerData['PlayerSkillModifications'] = skillMods
-
-    printData[player['Code']] = playerData
+      printData['PlayerSkillModifications'] = skillMods
 
   if len(outData['RevealedPartnerCards']):
     printData['RevealedPartnerCards'] = []
