@@ -1094,7 +1094,7 @@ class Game(object):
       outData['RevealedPartnerCards'].append( card.jsonData() )
 
     outData['MaxTime'] = GameManager.setting("maxTime")
-    outData['IsGameOver'] = self.isNextStep() == false
+    outData['IsGameOver'] = self.isNextStep() == False
 
     if self.isNextStep():
       outData['Actions'] = self.nextStepAvailableActions()
