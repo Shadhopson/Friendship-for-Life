@@ -29,7 +29,7 @@ class PlayerCard(object):
     self.needs = DataManager.getRows( "SELECT * FROM PlayerNeed WHERE PlayerCode=?", [code] )
 
   def __str__(self):
-    ret = self.code;
+    ret = self.code
     skill_arr = []
     for skill in self.skills:
       skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
@@ -66,7 +66,7 @@ class HobbyCard(object):
     self.needs = DataManager.getRows( "SELECT * FROM HobbyNeed WHERE HobbyCode=?", [code] )
 
   def __str__(self):
-    ret = self.code;
+    ret = self.code
     skill_arr = []
     for skill in self.skills:
       skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
@@ -105,7 +105,7 @@ class ChildCard(object):
     self.needs = DataManager.getRows( "SELECT * FROM ChildNeed WHERE ChildCode=?", [code] )
 
   def __str__(self):
-    ret = self.code;
+    ret = self.code
     skill_arr = []
     for skill in self.skills:
       skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
@@ -154,7 +154,7 @@ class JobCard(object):
         self.pay = 1
 
   def __str__(self):
-    ret = self.code;
+    ret = self.code
     skill_arr = []
     for skill in self.skillRequirements:
       skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
@@ -209,7 +209,7 @@ class PartnerCard(object):
     return partnerData
 
   def __str__(self):
-    ret = self.code;
+    ret = self.code
     skill_arr = []
     for skill in self.skillRequirements:
       skill_arr.append( "%s:%d"%(skill['SkillCode'],skill['Value']) )
@@ -972,7 +972,7 @@ class Game(object):
             for player in self.players:
               if player.playerCard.code == gLog['PlayerCode']:
                 gLog['EndPoints'] = player.points()
-                break;
+                break
 
     # record action
     self.gameLog.append(log)
@@ -1093,8 +1093,8 @@ class Game(object):
     for card in self.revealedPartnerCards:
       outData['RevealedPartnerCards'].append( card.jsonData() )
 
-    outData['MaxTime'] = GameManager.setting("maxTime");
-    outData['IsGameOver'] = self.isNextStep();
+    outData['MaxTime'] = GameManager.setting("maxTime")
+    outData['IsGameOver'] = self.isNextStep() == false
 
     if self.isNextStep():
       outData['Actions'] = self.nextStepAvailableActions()
@@ -1162,7 +1162,7 @@ class GameManager(object):
 
     line = "Avg Score: %.2f"%( sum(scores) / float(len(scores) ) )
     fileOut  = open( "%s/results.txt"%(outPath), 'wb' )
-    fileOut.write( line+'\n' );
+    fileOut.write( line+'\n' )
     print line
     for player in sorted(playerScores):
       line = "%s Avg Score: %.2f"%(player, sum(playerScores[player]) / float(len(playerScores[player]))) 
