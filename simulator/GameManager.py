@@ -1096,6 +1096,13 @@ class Game(object):
     outData['MaxTime'] = GameManager.setting("maxTime")
     outData['IsGameOver'] = self.isNextStep() == False
 
+    outData['LastEventRoll'] = None
+    for log in reverse(self.gameLog):
+      if log['eventRoll'] != None:
+        outData['LastEventRoll'] = log['eventRoll']
+        break
+
+
     if self.isNextStep():
       outData['Actions'] = self.nextStepAvailableActions()
     else:
