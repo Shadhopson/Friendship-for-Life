@@ -846,7 +846,7 @@ class Game(object):
           self.partnerCardDeck.insert(0,partner)
 
     # EVENT ROLL (if evening)
-    if self.currentStep == 'evening':
+    if nextStep == 'night':
       eventRoll = random.randint( 0, 20 )
       if eventRoll in GameManager.setting('eventRollPromotion'):
         log["eventRoll"] = "Promotion" 
