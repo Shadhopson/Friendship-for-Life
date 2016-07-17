@@ -918,19 +918,34 @@ class Game(object):
 
       elif eventRoll in GameManager.setting('eventRollRelativeDeath'):
         log["eventRoll"] = "RelativeDeath" 
+        self.currentPlayer().modifyNeed( "Social", 1 )
+        self.currentPlayer().modifyNeed( "HelpTheWorld", 1 )
+        self.currentPlayer().money += 1
 
       elif eventRoll in GameManager.setting('eventRollReferral'):
-        log["eventRoll"] = "Referral" 
+        log["eventRoll"] = "Referral - INACTIVE" 
       elif eventRoll in GameManager.setting('eventRollLoan'):
         log["eventRoll"] = "RollLoan" 
+        self.currentPlayer().money += 4
+        self.currentPlayer().modifyNeed( "Need", 6 )
+
       elif eventRoll in GameManager.setting('eventRollUnexpectedChild'):
         log["eventRoll"] = "UnexpectedChild" 
+        nextChildCard = self.childCardDeck.pop()
+        self.currentPlayer().children.append(nextChildCard)
       elif eventRoll in GameManager.setting('eventRollAdopt'):
         log["eventRoll"] = "Adopt" 
       elif eventRoll in GameManager.setting('eventRollStatMinus'):
         log["eventRoll"] = "StatMinus" 
+        skillStats = list( self.currentPlayer().skillStats().keys() )
+        choice = random.randint(0,len(skillStats)-1)
+        self.currentPlayer().modifySkill( choice, -1 )
+
       elif eventRoll in GameManager.setting('eventRollStatPlus'):
         log["eventRoll"] = "StatPlus" 
+        skillStats = list( self.currentPlayer().skillStats().keys() )
+        choice = random.randint(0,len(skillStats)-1)
+        self.currentPlayer().modifySkill( choice, 1 )
       else:
         log["eventRoll"] = "Nothing" 
 

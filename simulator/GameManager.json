@@ -28,16 +28,16 @@
   "eventRollPartnerSkillIncrease": [3], 
   "eventRollJobCheckIn": [4,5,6,7], 
   "eventRollRelationshipCheckIn": [8,9,10,11], 
-  "eventRollFriendFight": [12], 
+  "eventRollFriendFight": [12,14], 
   "eventRollRelativeDeath": [13], 
-  "eventRollReferral": [14], 
+  "eventRollReferral": [], 
   "eventRollLoan": [15], 
-  "eventRollUnexpectedChild": [16], 
-  "eventRollAdopt": [17], 
+  "eventRollUnexpectedChild": [16,17], 
+  "eventRollAdopt": [], 
   "eventRollStatMinus": [18], 
   "eventRollStatPlus": [19], 
 
-  "forceShareKnowledge": true,
+  "forceShareKnowledge": false,
 
   "gameLogOutCsvPath": "gameLog.csv"
 
