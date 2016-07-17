@@ -1097,11 +1097,10 @@ class Game(object):
     outData['IsGameOver'] = self.isNextStep() == False
 
     outData['LastEventRoll'] = None
-    for log in reverse(self.gameLog):
-      if log['eventRoll'] != None:
+    for log in reversed(self.gameLog):
+      if 'eventRoll' in log:
         outData['LastEventRoll'] = log['eventRoll']
         break
-
 
     if self.isNextStep():
       outData['Actions'] = self.nextStepAvailableActions()
