@@ -387,7 +387,7 @@ class Player(object):
         if needStat == 'Money':
           points += 1
         else:
-          points += min([needVal, needFulfillmentStats[needStat])
+          points += min([needVal, needFulfillmentStats[needStat]])
 
     for job in self.jobs:
       jobRes = self.isJobCheckPass(job)
