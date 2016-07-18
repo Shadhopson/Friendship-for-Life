@@ -927,7 +927,7 @@ class Game(object):
       elif eventRoll in GameManager.setting('eventRollLoan'):
         log["eventRoll"] = "RollLoan" 
         self.currentPlayer().money += 4
-        self.currentPlayer().modifyNeed( "Need", 6 )
+        self.currentPlayer().modifyNeed( "Money", 6 )
 
       elif eventRoll in GameManager.setting('eventRollUnexpectedChild'):
         log["eventRoll"] = "UnexpectedChild" 
