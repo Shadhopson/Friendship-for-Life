@@ -656,11 +656,17 @@ class Game(object):
       #for player in self.players:
       #  if player != self.currentPlayer() and self.currentPlayer().trustTokens > 0:
       #    ret.append( { 'action': 'hangOut', 'target': player.playerCard.code } )
-      ret.append( { 'step': 'morning', 'action': 'hangOut' } )
       if self.currentPlayer().trustTokens > 0:
         ret.append( { 'step': 'morning', 'action': 'shareKnowledge', 'knowledgeType': 'skill' } )
         ret.append( { 'step': 'morning', 'action': 'shareKnowledge', 'knowledgeType': 'need' } )
-      ret.append( { 'step': 'morning', 'action': 'pass' } )
+
+      if GameManager.setting("forceShareKnowledge"):
+        if self.currentPlayer().trustTokens < 1:
+          ret.append( { 'step': 'morning', 'action': 'hangOut' } )
+      else:
+        ret.append( { 'step': 'morning', 'action': 'hangOut' } )
+        ret.append( { 'step': 'morning', 'action': 'pass' } )
+
 
     elif self.currentStep == 'evening':
       currentTime = self.currentPlayer().currentTime()
@@ -734,12 +740,10 @@ class Game(object):
       nextStep = 'night'
 
     #perform action
-    if action['action'] == 'hangOut' or \
-        (self.currentStep == 'morning' and GameManager.setting('forceShareKnowledge') and self.currentPlayer().trustTokens < 1):
+    if action['action'] == 'hangOut':
       self.currentPlayer().trustTokens += 1
 
-    elif action['action'] == 'shareKnowledge' or \
-        (self.currentStep == 'morning' and GameManager.setting('forceShareKnowledge') ):
+    elif action['action'] == 'shareKnowledge':
 
       #figure out what skills and needs this player hasn't been told
       self.currentPlayer().trustTokens -= 1
@@ -753,15 +757,15 @@ class Game(object):
           neededNeedInfo.append( need['NeedCode'] )
 
       # randomly select either skill or need (if both still are needed)
-      choices = []
-      if len(neededSkillInfo):
-        choices.append("skill")
-      if len(neededNeedInfo):
-        choices.append("need")
-      choice = choices[random.randint(0,len(choices)-1)]
+      #choices = []
+      #if len(neededSkillInfo):
+      #  choices.append("skill")
+      #if len(neededNeedInfo):
+      #  choices.append("need")
+      #choice = choices[random.randint(0,len(choices)-1)]
 
       # share skill info
-      if choice == 'skill':
+      if action['knowledgeType'] == 'skill' and len(neededSkillInfo):
         skill = neededSkillInfo[random.randint(0,len(neededSkillInfo)-1)]
 
         playerSkills = self.currentPlayer().skillStats()
@@ -773,7 +777,7 @@ class Game(object):
           self.currentPlayer().skillKnowledge[skill] = 'low'
 
       # share need info
-      elif choice == 'need':
+      elif action['knowledgeType'] == 'need' and len(neededNeedInfo):
         need = neededNeedInfo[random.randint(0,len(neededNeedInfo)-1)]
         self.currentPlayer().needKnowledge.append(need)
 
