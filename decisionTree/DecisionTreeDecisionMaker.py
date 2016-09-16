@@ -6,6 +6,8 @@ sys.path.insert(0, "%s/../simulator"%dtPath)
 
 
 from sklearn import tree
+from sklearn import preprocessing
+from sklearn.neural_network import MLPClassifier
 import numpy as np
 import json
 import pickle
@@ -49,11 +51,20 @@ class DecisionTreeCreator:
         15: convertCell \
         } )
 
-    input_data = dataset[:, [0,1,2,4,5,6,7,8,9,10,11,12,13,14,15] ]
+    non_cat_data = dataset[:, [0,1,2] ]
+    cat_data = dataset[:, [4,5,6,7,8,9,10,11,12,13,14,15] ]
+
     output_data = dataset[:, 3]
 
-    clf = tree.DecisionTreeClassifier()
-    clf = clf.fit(input_data, output_data)
+    enc =  preprocessing.OneHotEncoder()
+    enc.fit(cat_data)
+    cat_out = enc.transform(cat_data).toarray() 
+    merge_data = np.concatenate((non_cat_data,cat_data),axis=1)
+    d(merge_data[0])
+
+    clf = MLPClassifier(algorithm='l-bfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+    #clf = tree.DecisionTreeClassifier()
+    clf = clf.fit(merge_data, output_data)
 
     s = pickle.dumps(clf)
     dtFileName = "%s\\save.pkl"%self.outDir
@@ -69,7 +80,7 @@ class DecisionTreeCreator:
 
     sample_inputs = []
     for i in range( 100 ):
-      sample_inputs.append( input_data[i*500] )
+      sample_inputs.append( merge_data[i*500] )
     file = open( "%s\\sampleInputs.pkl"%self.outDir, 'w' )
     file.write( pickle.dumps(sample_inputs) )
     file.close()
@@ -79,7 +90,7 @@ class DecisionTreeCreator:
     file.close()
 
     print dataset[722]
-    print input_data[722]
+    print merge_data[722]
     print output_data[722]
     print clf.predict( sample_inputs ) 
 

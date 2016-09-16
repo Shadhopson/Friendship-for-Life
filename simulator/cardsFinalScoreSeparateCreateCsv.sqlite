@@ -1,0 +1,134 @@
+.mode csv
+.output gameOutFinalScore.csv
+
+SELECT
+  "Time",
+  "Round",
+  "Money",
+  "FinalScore",
+  "ActionType",
+  "Decision",
+  "C1Code",
+  "C2Code",
+  "C3Code",
+  "J1Code",
+  "J2Code",
+  "J3Code",
+  "H1Code",
+  "H2Code",
+  "H3Code",
+  "P1Code",
+  "P2Code",
+  "P3Code",
+  "FP1Code",
+  "FP2Code",
+  "FP3Code",
+  "PP1Code",
+  "PP2Code",
+  "PP3Code",
+  "FJ1Code",
+  "FJ2Code",
+  "FJ3Code",
+  "PJ1Code",
+  "PJ2Code",
+  "PJ3Code",
+  "N1Code",
+  "N2Code",
+  "N3Code",
+  "N4Code",
+  "N5Code",
+  "S1Code",
+  "S2Code",
+  "S3Code",
+  "S4Code",
+  "S5Code"
+  ;
+
+SELECT
+  GameState.Time,
+  GameState.Round,
+  GameState.Money,
+  GameState.FinalScore,
+  GameStateAction.ActionType,
+  GameStateAction.Decision,
+  C1.ChildCode AS C1Code,
+  C2.ChildCode AS C2Code,
+  C3.ChildCode AS C3Code,
+  J1.JobCode AS J1Code,
+  J2.JobCode AS J2Code,
+  J3.JobCode AS J3Code,
+  H1.HobbyCode AS H1Code,
+  H2.HobbyCode AS H2Code,
+  H3.HobbyCode AS H3Code,
+  P1.PartnerCode AS P1Code,
+  P2.PartnerCode AS P2Code,
+  P3.PartnerCode AS P3Code,
+  FP1.PartnerCode AS FP1Code,
+  FP2.PartnerCode AS FP2Code,
+  FP3.PartnerCode AS FP3Code,
+  PP1.PartnerCode AS PP1Code,
+  PP2.PartnerCode AS PP2Code,
+  PP3.PartnerCode AS PP3Code,
+  FJ1.JobCode AS FJ1Code,
+  FJ2.JobCode AS FJ2Code,
+  FJ3.JobCode AS FJ3Code,
+  PJ1.JobCode AS PJ1Code,
+  PJ2.JobCode AS PJ2Code,
+  PJ3.JobCode AS PJ3Code,
+  N1.NeedCode AS N1Code,
+  N2.NeedCode AS N2Code,
+  N3.NeedCode AS N3Code,
+  N4.NeedCode AS N4Code,
+  N5.NeedCode AS N5Code,
+  S1.SkillCode AS S1Code,
+  S2.SkillCode AS S2Code,
+  S3.SkillCode AS S3Code,
+  S4.SkillCode AS S4Code,
+  S5.SkillCode AS S5Code,
+  S1.KnowledgeCode AS SK1Code,
+  S2.KnowledgeCode AS SK2Code,
+  S3.KnowledgeCode AS SK3Code,
+  S4.KnowledgeCode AS SK4Code,
+  S5.KnowledgeCode AS SK5Code
+FROM
+  GameState
+  INNER JOIN GameStateAction ON GameStateAction.GameStateId = GameState.GameStateId
+  LEFT JOIN GameStateChild AS C1 ON C1.GameStateId = GameState.GameStateId AND C1.Position=1
+  LEFT JOIN GameStateChild AS C2 ON C2.GameStateId = GameState.GameStateId AND C2.Position=2
+  LEFT JOIN GameStateChild AS C3 ON C3.GameStateId = GameState.GameStateId AND C3.Position=3
+  LEFT JOIN GameStateJob AS J1 ON J1.GameStateId = GameState.GameStateId AND J1.Position=1
+  LEFT JOIN GameStateJob AS J2 ON J2.GameStateId = GameState.GameStateId AND J2.Position=2
+  LEFT JOIN GameStateJob AS J3 ON J3.GameStateId = GameState.GameStateId AND J3.Position=3
+  LEFT JOIN GameStateHobby AS H1 ON H1.GameStateId = GameState.GameStateId AND H1.Position=1
+  LEFT JOIN GameStateHobby AS H2 ON H2.GameStateId = GameState.GameStateId AND H2.Position=2
+  LEFT JOIN GameStateHobby AS H3 ON H3.GameStateId = GameState.GameStateId AND H3.Position=3
+  LEFT JOIN GameStatePartner AS P1 ON P1.GameStateId = GameState.GameStateId AND P1.Position=1
+  LEFT JOIN GameStatePartner AS P2 ON P2.GameStateId = GameState.GameStateId AND P2.Position=2
+  LEFT JOIN GameStatePartner AS P3 ON P3.GameStateId = GameState.GameStateId AND P3.Position=3
+
+  LEFT JOIN GameStateJobFiredCount AS PJ1 ON PJ1.GameStateId = GameState.GameStateId AND PJ1.Position=1
+  LEFT JOIN GameStateJobFiredCount AS PJ2 ON PJ2.GameStateId = GameState.GameStateId AND PJ2.Position=2
+  LEFT JOIN GameStateJobFiredCount AS PJ3 ON PJ3.GameStateId = GameState.GameStateId AND PJ3.Position=3
+  LEFT JOIN GameStateJobPassedCount AS FJ1 ON FJ1.GameStateId = GameState.GameStateId AND FJ1.Position=1
+  LEFT JOIN GameStateJobPassedCount AS FJ2 ON FJ2.GameStateId = GameState.GameStateId AND FJ2.Position=2
+  LEFT JOIN GameStateJobPassedCount AS FJ3 ON FJ3.GameStateId = GameState.GameStateId AND FJ3.Position=3
+  LEFT JOIN GameStatePartnerFiredCount AS PP1 ON PP1.GameStateId = GameState.GameStateId AND PP1.Position=1
+  LEFT JOIN GameStatePartnerFiredCount AS PP2 ON PP2.GameStateId = GameState.GameStateId AND PP2.Position=2
+  LEFT JOIN GameStatePartnerFiredCount AS PP3 ON PP3.GameStateId = GameState.GameStateId AND PP3.Position=3
+  LEFT JOIN GameStatePartnerPassedCount AS FP1 ON FP1.GameStateId = GameState.GameStateId AND FP1.Position=1
+  LEFT JOIN GameStatePartnerPassedCount AS FP2 ON FP2.GameStateId = GameState.GameStateId AND FP2.Position=2
+  LEFT JOIN GameStatePartnerPassedCount AS FP3 ON FP3.GameStateId = GameState.GameStateId AND FP3.Position=3
+
+  LEFT JOIN GameStateNeedKnowledge AS N1 ON N1.GameStateId = GameState.GameStateId AND N1.Position=1
+  LEFT JOIN GameStateNeedKnowledge AS N2 ON N2.GameStateId = GameState.GameStateId AND N2.Position=2
+  LEFT JOIN GameStateNeedKnowledge AS N3 ON N3.GameStateId = GameState.GameStateId AND N3.Position=3
+  LEFT JOIN GameStateNeedKnowledge AS N4 ON N4.GameStateId = GameState.GameStateId AND N4.Position=4
+  LEFT JOIN GameStateNeedKnowledge AS N5 ON N5.GameStateId = GameState.GameStateId AND N5.Position=5
+
+  LEFT JOIN GameStateSkillKnowledge AS S1 ON S1.GameStateId = GameState.GameStateId AND S1.Position=1
+  LEFT JOIN GameStateSkillKnowledge AS S2 ON S2.GameStateId = GameState.GameStateId AND S2.Position=2
+  LEFT JOIN GameStateSkillKnowledge AS S3 ON S3.GameStateId = GameState.GameStateId AND S3.Position=3
+  LEFT JOIN GameStateSkillKnowledge AS S4 ON S4.GameStateId = GameState.GameStateId AND S4.Position=4
+  LEFT JOIN GameStateSkillKnowledge AS S5 ON S5.GameStateId = GameState.GameStateId AND S5.Position=5
+  ;
+
